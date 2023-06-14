@@ -1,0 +1,5 @@
+id,adress_id,firstname,lastname,title,phone,fax,cell,email,loginname,login_cnt,login_ip,login_date,password,status
+2,1,Kai,Pfeiffer,Herr,56032102,,,idevo@gmx.net,kai2,0,192.168.7.106,1230909639,7d81e542279928c3a6743f7480d10ebc,1
+1,1,Kai,Pfeiffer,Herr,56032102,,,idevo@gmx.de,kai,0,217.95.233.40,1677513025,f2714e9a7ab0129d3ae0f1f35007638e,255
+16,16,Kai,Pfeiffer,,,,,pfeiffer.kai@gmx.net,piffer,0,192.168.7.106,1231786504,f2714e9a7ab0129d3ae0f1f35007638e,1
+17,17,Kai,Pfeiffer,,,,,kontakt@gasthauspfeiffer.de,bordihn,0,84.157.96.154,1355951457,c1ed4c1369f6af7c64dce16701d5383e,1
