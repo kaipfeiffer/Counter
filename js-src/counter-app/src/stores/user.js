@@ -63,7 +63,7 @@ export const useUserStore = defineStore("user", () => {
    * loggt den Nutzer wieder aus
    */
   function setCtag(ctag) {
-    console.log("ctag: " + ctag);
+    // console.log("ctag: " + ctag);
     user.value.ctag = ctag;
     localStorage.setItem("user", JSON.stringify(user.value));
   }

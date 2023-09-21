@@ -12,9 +12,12 @@ if (!defined('WPINC')) {
  * @author     Kai Pfeiffer <kp@idevo.de>
  */
 
- require_once KPM_COUNTER_PLUGIN_PATH . 'includes/abstracts/abstract-kpm-counter-model-filtered.php';
+// require_once KPM_COUNTER_PLUGIN_PATH . 'includes/abstracts/abstract-kpm-counter-model-filtered.php';
 
-class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Filtered
+require_once KPM_COUNTER_PLUGIN_PATH . 'includes/abstracts/abstract-kpm-counter-model-ctagged.php';
+
+// class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Filtered
+class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Ctagged
 {
     /**
      * VARIABLES
@@ -44,15 +47,6 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Filtered
         'date'          => '%s',
         'remark'        => '%s',
     ];
-
-
-    /**
-     * $fk_user_table
-     * the foreign-key.field which is related to the user-table
-     * 
-     * @var string
-     */
-    protected static $fk_user_table = 'counter_id';
 
 
     /**
@@ -92,22 +86,13 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Filtered
 
 
     /**
-     * $user_table_name
-     * the name of the table with the user-id without wp-prefix
-     * 
-     * @var string
-     */
-    protected static $user_table_name = 'counter';
-
-
-    /**
      * $user_column
      * 
-     * die Spalte, die die User-Informationen beinhaltet
+     * die Spalte in der Haupttabelle, die die User-Informationen beinhaltet
      * 
      * @var integer
      */
-    protected static $user_column = 'owner';
+    protected static $user_column = 'counter_id';
 
 
     /**
@@ -117,6 +102,25 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Filtered
      * @var string
      */
     protected static $user_primary = 'id';
+
+
+    /**
+     * $user_table_key
+     * 
+     * the key field which is identifies the user in the user-table
+     * 
+     * @var string
+     */
+    protected static $user_table_key = 'owner';
+
+
+    /**
+     * $user_table_name
+     * the name of the table with the user-id without wp-prefix
+     * 
+     * @var string
+     */
+    protected static $user_table_name = 'counter';
 
 
     /**
@@ -176,54 +180,5 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Filtered
             static::$primary
         );
         $wpdb->query($sql);
-    }
-
-
-    /**
-     * @function get
-     * 
-     * gets rows
-     * 
-     * @param integer                   ID of the required row
-     * @return array|object|null|void   the fetched data row
-     */
-    public static function get($page = 0, $page_size = null)
-    {
-        global $wpdb;
-
-        $page_size = $page_size ? $page_size : static::$page_size;
-
-        error_log(__CLASS__ . '->' . __FUNCTION__ . '-> Class_name: ' . print_r(static::$class_name, 1));
-
-        $sql = sprintf(
-            'SELECT
-                    `t`.`%1$s`
-                FROM
-                    `%2$s` `t`
-                JOIN
-                    `%3$s` `ut`
-                ON
-                    `ut`.`%4$s` = `t`.`%5$s`
-                AND
-                    `ut`.`%6$s` = %7$d
-                WHERE
-                1
-                LIMIT
-                    %8$d,%9$d;',
-            implode('`,`t`.`', array_keys(static::$columns)),
-            static::get_tablename(),
-            static::get_tablename(static::$user_table_name),
-            static::$user_primary,
-            static::$fk_user_table,
-            static::$user_column,
-            static::$user,
-            $page * $page_size,
-            $page_size
-        );
-
-        error_log(__CLASS__ . '->' . __FUNCTION__ . '-> SQL:' . $sql);
-        $result = $wpdb->get_results($sql);
-
-        return $result;
     }
 }

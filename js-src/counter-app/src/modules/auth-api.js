@@ -15,7 +15,7 @@ function request(method) {
       headers: authHeader(url),
     };
 
-    // console.log(method)
+    console.log("request",method,url,body)
     if (body) {
       switch (method) {
         case "GET": {
@@ -32,7 +32,7 @@ function request(method) {
         }
       }
     }
-    // console.log(url)
+    console.log("URL",url)
     // console.log(options);
     return fetch(url, options).then(handleResponse);
   };

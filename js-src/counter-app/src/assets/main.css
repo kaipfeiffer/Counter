@@ -1,9 +1,9 @@
-@import './base.css';
+@import "./base.css";
 
 #app {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 
   font-weight: normal;
 }
@@ -14,27 +14,45 @@ a,
   transition: 0.4s;
 }
 
-menu a{
-  color: var( --color-menu-link);
+menu a {
+  color: var(--color-menu-link);
 }
 
-section a{
-  color: var( --color-link);
+section a {
+  color: var(--color-link);
+}
+
+input[type=submit],
+a.button {
+  color: 1px solid var(--color-button);
+  background-color: var(--color-button-background);
+  border: 1px solid var(--color-button-border);
+  padding: 5px 10px;
+}
+
+header{
+  padding: 10px 20px;
+}
+
+.back-navigation {
+  padding: 20px 20px 20px 0px;
 }
 
 @media (hover: hover) {
   a:hover {
-    color: var( --color-menu-link-hover);
+    color: var(--color-menu-link-hover);
+  }
+}
+
+@media (min-width: 414px) {
+  #app {
+    padding: 0 2rem;
   }
 }
 
 @media (min-width: 1024px) {
   body {
     display: flex;
-    place-items: center;
-  }
-
-  #app {
-    padding: 0 2rem;
+    /* place-items: center; */
   }
 }

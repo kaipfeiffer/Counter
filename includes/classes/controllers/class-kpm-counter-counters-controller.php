@@ -87,7 +87,7 @@ class Kpm_Counter_Counters_Controller extends Kpm_Counter_Controller
         register_rest_route(static::$route, '/' . static::$target . '/ctag/(?P<ctag>\d+)', array(
             'methods' => WP_REST_Server::READABLE,
             'callback' => __CLASS__ . '::get',
-            'permission_callback' =>  __CLASS__ . '::authenticate',
+            // 'permission_callback' =>  __CLASS__ . '::authenticate',
         ));
         register_rest_route(static::$route, '/' . static::$target . '/', array(
             'methods' => WP_REST_Server::EDITABLE,

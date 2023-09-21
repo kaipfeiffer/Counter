@@ -13,6 +13,7 @@ if ( ! defined( 'WPINC' ) ) {
  */
 
 require_once KPM_COUNTER_PLUGIN_PATH . 'includes/abstracts/abstract-kpm-counter-controller.php';
+require_once KPM_COUNTER_PLUGIN_PATH . 'includes/classes/models/class-kpm-counter-readings-model.php';
 
 class Kpm_Counter_Readings_Controller extends Kpm_Counter_Controller
 {
@@ -73,11 +74,12 @@ class Kpm_Counter_Readings_Controller extends Kpm_Counter_Controller
     public static function register_rest_route()
     {
         // Datenbank-Klasse einbinden
-        parent::register_rest_route();
+        // parent::register_rest_route();
 
+        // error_log(__CLASS__.'->'.__LINE__.'->'.WP_REST_Server::EDITABLE.'->'.static::$route. '/' . static::$target . '/');
         // error_log(__CLASS__.'->'.__FUNCTION__.'-> CALLABLE: '.is_callable(__CLASS__ . '::get'));
         register_rest_route( static::$route, '/'.static::$target.'/', array(
-            'methods' => 'GET',
+            'methods' => WP_REST_Server::READABLE,
             'callback' => __CLASS__ . '::get',
             'permission_callback' =>  __CLASS__ . '::authenticate',
           ) );
@@ -92,7 +94,7 @@ class Kpm_Counter_Readings_Controller extends Kpm_Counter_Controller
             'permission_callback' =>  __CLASS__ . '::authenticate',
         ));
         register_rest_route(static::$route, '/' . static::$target . '/', array(
-            'methods' => WP_REST_Server::EDITABLE,
+            'methods' =>  WP_REST_Server::EDITABLE,
             'callback' => __CLASS__ . '::edit',
             'permission_callback' =>  __CLASS__ . '::authenticate',
         ));

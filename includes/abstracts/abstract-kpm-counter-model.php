@@ -2,6 +2,7 @@
 if (!defined('WPINC')) {
     die;
 }
+require_once KPM_COUNTER_PLUGIN_PATH . 'includes/traits/trait-kpm-counter-errors-trait.php';
 
 /**
  * Abstract Static Class for Database-Access via wpdb
@@ -14,6 +15,8 @@ if (!defined('WPINC')) {
 
 abstract class Kpm_Counter_Model
 {
+    use Kpm_Counter_Errors;
+
     /**
      * VARIABLES
      */
@@ -49,6 +52,7 @@ abstract class Kpm_Counter_Model
      * @var integer
      */
     protected static $error;
+
 
     /**
      * $error_message
@@ -165,7 +169,6 @@ abstract class Kpm_Counter_Model
      */
     protected static function get_defaults()
     {
-        static::$chunk_list = array();
         return array();
     }
 
@@ -197,7 +200,6 @@ abstract class Kpm_Counter_Model
      */
     protected static function get_update_defaults()
     {
-        static::$chunk_list = array();
         return array();
     }
 
@@ -212,7 +214,7 @@ abstract class Kpm_Counter_Model
      */
     protected static function set_values($columns)
     {
-        $placeholders = array();
+        $placeholders = $chunk_list = array();
 
         // error_log(__CLASS__.'-'.print_r($columns,1));
         // error_log(__CLASS__.'-'.print_r(static::$columns,1));
@@ -222,11 +224,11 @@ abstract class Kpm_Counter_Model
                 // error_log(__CLASS__.'-'.$key);
                 array_push($placeholders, static::$columns[$key]);
                 // array_push($placeholders, static::escape_placeholder(static::$columns[$key]));
-                static::$chunk_list[$key] = sprintf(static::$columns[$key], $value);
+                $chunk_list[$key] = sprintf(static::$columns[$key], $value);
             }
         }
 
-        return $placeholders;
+        return array($chunk_list, $placeholders);
     }
 
 
@@ -262,6 +264,36 @@ abstract class Kpm_Counter_Model
      */
 
     /**
+     * @function create_multi
+     * 
+     * add multiple new rows to the table
+     * 
+     * @param   array       array with rows to insert
+     * @return  int|null    if successful, the number of inserted records
+     */
+    public static function create_multi($rows)
+    {
+        global $wpdb;
+
+        $inserts    = array();
+        $values     = array();
+
+        // Die Felder in einem Rutsch in die Datenbank eintragen
+        foreach ($rows as $row) {
+            list($chunklist, $placeholders) = static::set_values($row);
+            array_push($inserts, '('.implode(',',$placeholders).')');
+            array_push($values, ...array_values($chunklist));
+        }
+
+        $sql    = 'INSERT INTO `' . static::get_tablename() . '` (`' . implode('`,`',array_keys($chunklist)) . '`) VALUES ' . implode(',', $inserts) . ';';
+        error_log(__CLASS__ . '->' . __LINE__ . $sql);
+        $result = $wpdb->query($wpdb->prepare($sql,$values));
+
+        return $result;
+    }
+
+
+    /**
      * @function create
      * 
      * add a new row to the table
@@ -273,20 +305,33 @@ abstract class Kpm_Counter_Model
     {
         global $wpdb;
 
-        $placeholders   = array();
+        $placeholders   = $chunk_list   = array();
         $row            = null;
 
         // merge default columns with updated values
         $columns = array_merge(static::get_defaults(), $columns);
 
         // set only supported keys and retrieve prepare-placeholders
-        $placeholders   = static::set_values($columns);
+        list($chunk_list, $placeholders)   = static::set_values($columns);
 
-        $result = $wpdb->insert(static::get_tablename(), static::$chunk_list, $placeholders);
+        $result = $wpdb->insert(static::get_tablename(), $chunk_list, $placeholders);
         if ($result) {
             $row = static::read($wpdb->insert_id);
         }
         return $row;
+    }
+
+
+    /**
+     * get_primary
+     * 
+     * get the primary-key of the model
+     * 
+     * @return string     Primary-Key
+     */
+    public static function get_primary()
+    {
+        return static::$primary;
     }
 
 
@@ -304,7 +349,7 @@ abstract class Kpm_Counter_Model
 
         // if where is an integer or array
         if ($where) {
-            $placeholders = array();
+            $placeholders = $chunk_list = array();
 
             // if an integer is submitted
             if (is_int($where)) {
@@ -319,8 +364,8 @@ abstract class Kpm_Counter_Model
             // an array was submitted
             else {
                 // set only supported keys and retrieve prepare-placeholders
-                $placeholders   = static::set_values($where);
-                $where          = static::$chunk_list;
+                list($chunk_list, $placeholders)   = static::set_values($where);
+                $where          = $chunk_list;
             }
             $result = $wpdb->delete(static::get_tablename(), $where, $placeholders);
         }
@@ -367,7 +412,7 @@ abstract class Kpm_Counter_Model
      * 
      */
     public static function user($user)
-    {   
+    {
         static::$user = $user;
         return static::$class_name;
     }
@@ -444,7 +489,7 @@ abstract class Kpm_Counter_Model
         $where_stmts    = array();
         $operator       = $or ? ' OR ' : ' AND ';
         $pagination     = null;
-        $placeholders   = array();
+        $placeholders   = $chunk_list   = array();
         $id             = null;
 
         // if an integer is submitted
@@ -463,8 +508,8 @@ abstract class Kpm_Counter_Model
         // an array was submitted
         else {
             // set only supported keys and retrieve prepare-placeholders
-            $placeholders   = static::set_values($where);
-            $where          = static::$chunk_list;
+            list($chunk_list, $placeholders)   = static::set_values($where);
+            $where          = $chunk_list;
 
             error_log(__CLASS__ . '-' . print_r($placeholders, 1));
             error_log(__CLASS__ . '-' . print_r($where, 1));
@@ -563,13 +608,15 @@ abstract class Kpm_Counter_Model
             // merge default columns with updated values
             $columns = array_merge(static::get_update_defaults(), $columns);
 
-            $placeholders   = static::set_values($columns);
+            list($chunk_list, $placeholders)   = static::set_values($columns);
 
-            $result = $wpdb->update(static::get_tablename(), static::$chunk_list, $where, $placeholders);
+            $result = $wpdb->update(static::get_tablename(), $chunk_list, $where, $placeholders);
 
+            // error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($chunk_list, 1));
             // if update was successful
             if ($result) {
-                $row = static::read(static::$chunk_list[static::$primary]);
+                // $row = static::read($chunk_list);
+                $row = static::read(array(static::$primary => $columns[static::$primary]));
             }
         } else {
             // throw error

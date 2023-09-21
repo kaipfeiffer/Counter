@@ -3,6 +3,7 @@ if (!defined('WPINC')) {
     die;
 }
 
+require_once KPM_COUNTER_PLUGIN_PATH . 'includes/traits/trait-kpm-counter-errors-trait.php';
 /**
  * Abstract Static Class for Database-Access via wpdb
  *
@@ -14,6 +15,8 @@ if (!defined('WPINC')) {
 
 abstract class Kpm_Counter_Controller
 {
+    USE Kpm_Counter_Errors;
+
     /**
      * VARIABLES
      */
@@ -62,42 +65,6 @@ abstract class Kpm_Counter_Controller
      * Die Route, die Zieldatei
      */
     protected static $database_class;
-
-
-    /**
-     * $error404
-     * 
-     * @var string
-     * Die Route, an die Rest-Requests entgegengenommen werden
-     */
-    protected static $error404 = '"%d" ist eine ungültige ID.';
-
-
-    /**
-     * $error404
-     * 
-     * @var string
-     * Die Route, an die Rest-Requests entgegengenommen werden
-     */
-    protected static $errorMissingData = 'Es wurden keine gültigen Daten übermittelt';
-
-
-    /**
-     * $error404
-     * 
-     * @var string
-     * Die Route, an die Rest-Requests entgegengenommen werden
-     */
-    protected static $errorOnSave = 'Die Daten konnten nicht gespeichert werden';
-
-
-    /**
-     * $error404
-     * 
-     * @var string
-     * Die Route, an die Rest-Requests entgegengenommen werden
-     */
-    protected static $errorMulti404 = 'Es konnten keine Einträge gefunden werden';
 
 
     /**
@@ -154,18 +121,17 @@ abstract class Kpm_Counter_Controller
 
         $result   = static::$auth->authenticate();
 
-        // error_log(__CLASS__.'->'.__FUNCTION__.'-> RESULT: '.print_r($result,1));
+        // error_log(__CLASS__.'->'.__FUNCTION__.'-> CLASS: '.static::$class_name);
         // error_log(__CLASS__.'->'.__FUNCTION__.'-> Class_name: '.print_r(static::$class_name,1));
-        if ('Access granted:' === $result['message']) {
+        if (isset($result['message']) && 'Access granted:' === $result['message']) {
             static::$data = $result['data'];
-            // error_log(__CLASS__.'->'.__FUNCTION__.'-> DATA: '.print_r(static::$data,1));
+            if (class_exists(static::$database_class)) {
+                static::$database_class::user($result['data']->counter_user);
+            }
             return true;
-        }
-        else{
-            // error_log(__CLASS__.'->'.__FUNCTION__.'-> ERROR: '.print_r($result,1));
+        } else {
             return false;
         }
-
     }
 
 
@@ -180,6 +146,12 @@ abstract class Kpm_Counter_Controller
     public static function register_rest_route()
     {
         static::include_database_class();
+
+        register_rest_route(static::$route, '/' . static::$target . '/', array(
+            'methods' => 'POST',
+            'callback' => static::$class_name . '::post',
+            'permission_callback' =>  __CLASS__ . '::authenticate',
+        ));
     }
 
 
@@ -206,13 +178,25 @@ abstract class Kpm_Counter_Controller
      */
     public static function edit(WP_REST_Request $request)
     {
+        // error_log(__CLASS__ . '->' .__LINE__.'->'.print_r($request,1));
         $method = $request->get_method();
         switch ($method) {
                 // Neuen Eintrag speichern
             case 'POST': {
                     $params = $request->get_params();
+                    error_log(__CLASS__ . '->' . __LINE__ . '-> PARAMS:' . print_r($params, 1));
                     if ($params) {
-                        $result = static::$database_class::create($params);
+                        if (isset($params[static::$database_class::get_primary()]) && 0 < $params[static::$database_class::get_primary()]) {
+
+                            error_log(__CLASS__ . '->' . __LINE__ . '->UPDATE');
+                            $result = static::$database_class::update($params);
+                        } elseif(array_is_list($params)) {
+                            error_log(__CLASS__ . '->' . __LINE__ . '->MULTIPLE');
+                            $result = static::$database_class::user(static::$data->counter_user)::create_multi($params);
+                        } else {
+                            error_log(__CLASS__ . '->' . __LINE__ . '->CREATE');
+                            $result = static::$database_class::create($params);
+                        }
                         if ($result) {
                             return $result;
                         } else {
@@ -234,7 +218,22 @@ abstract class Kpm_Counter_Controller
                     break;
                 }
             case 'PUT': {
-                    return ['message' => 'PUT Method'];
+                    $params = $request->get_params();
+                    if (isset($params[static::$database_class::get_primary()]) && 0 < $params[static::$database_class::get_primary()]) {
+
+                        error_log(__CLASS__ . '->' . __LINE__ . '->UPDATE');
+                        $result = static::$database_class::update($params);
+                    }
+                    if ($result) {
+                        return $result;
+                    } else {
+                        $error = new \WP_Error(
+                            'rest_post_invalid_id',
+                            __(static::$errorOnSave, ''),
+                            array('status' => 404)
+                        );
+                        return $error;
+                    }
                     break;
                 }
             case 'PATCH': {
@@ -276,7 +275,7 @@ abstract class Kpm_Counter_Controller
                 return $error;
             }
         } elseif ($request['ctag']) {
-            $result = static::$database_class::user(static::$data->counter_user)::read(['ctag' => ['value' => $request['ctag'],'operator' => '>']],false,$page, $page_size);
+            $result = static::$database_class::user(static::$data->counter_user)::read(['ctag' => ['value' => $request['ctag'], 'operator' => '>']], false, $page, $page_size);
         } elseif ($request['filters']) {
             $result = static::$database_class::read($request['filters'], null, $page, $page_size);
 

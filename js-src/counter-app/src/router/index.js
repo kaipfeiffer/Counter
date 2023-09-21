@@ -7,11 +7,13 @@ const router = createRouter({
   routes: [
     {
       path: "/",
+      // alias: "/kpm-counter",
       name: "home",
       component: HomeView
     },
     {
       path: "/counter/:id",
+      // alias: "/kpm-counter/counter/:id",
       name: "counter",
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
@@ -19,7 +21,17 @@ const router = createRouter({
       component: () => import("../views/CounterView.vue")
     },
     {
+      path: "/reading/:id",
+      // alias: "/kpm-counter/reading/:id",
+      name: "reading",
+      // route level code-splitting
+      // this generates a separate chunk (About.[hash].js) for this route
+      // which is lazy-loaded when the route is visited.
+      component: () => import("../views/ReadingView.vue")
+    },
+    {
       path: "/login",
+      // alias: "/kpm-counter/login",
       name: "login",
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
@@ -32,13 +44,14 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   // redirect to login page if not logged in and trying to access a restricted page
-  const publicPages = ["/login"];
+  const publicPages = ["/login","/kpm-counter/login"];
   const authRequired = !publicPages.includes(to.path);
   // const auth = [];
   const auth = useUserStore();
 
   if (authRequired && !auth.user) {
-      user.targetUrl = to.fullPath;
+      auth.targetUrl = to.fullPath;
+      // return "/kpm-counter/login";
       return "/login";
   }
 });

@@ -154,7 +154,7 @@ class Kpm_Counter
 	private function define_admin_hooks()
 	{
 		if (is_admin()) {
-			error_log(__CLASS__.'->'.__FUNCTION__.'-> IS ADMIN');
+			error_log(__CLASS__ . '->' . __FUNCTION__ . '-> IS ADMIN');
 			$plugin_admin = new Kpm_Counter_Admin($this->get_plugin_name(), $this->get_version());
 
 			$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
@@ -183,6 +183,11 @@ class Kpm_Counter
 		$this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
 		$this->loader->add_action('rest_api_init', $plugin_public, 'register_rest_routes');
 		$this->loader->add_action('rest_api_init', $plugin_public, 'init_cors', 15);
+
+		$this->loader->add_filter('page_template', $plugin_public, 'page_template');
+
+		// Enable API-Endpoints if Disable-Rest-Api is activated
+		$this->loader->add_filter('disable_wp_rest_api_server_var', $plugin_public, 'disable_wp_rest_api_server_var_custom');
 	}
 
 	/**

@@ -54,6 +54,25 @@ class Kpm_Counter_Public
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 	}
+	
+	/**
+	 * Enable the API-Endpoints of this Plugin
+	 *
+	 * @since    1.0.0
+	 */
+	public function disable_wp_rest_api_server_var_custom($var) { 
+	
+		// Example
+		return array(
+			'/wp-json/contact-form-7/v1/contact-forms/1757/refill',
+			'/wp-json/contact-form-7/v1/contact-forms/1757/refill/',
+			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback', 
+			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback/', 
+			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback/schema', 
+			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback/schema/'
+		); 
+		
+	}
 
 	/**
 	 * Register the stylesheets for the public-facing side of the site.
@@ -113,8 +132,8 @@ class Kpm_Counter_Public
 
 		header('Access-Control-Allow-Origin: ' . $origin_url);
 		header('Access-Control-Allow-Methods: POST, GET,DELETE,PUT');
-		header( 'Access-Control-Allow-Credentials: true' );
-		header( 'Access-Control-Allow-Headers: *');
+		header('Access-Control-Allow-Credentials: true');
+		header('Access-Control-Allow-Headers: *');
 		return $value;
 	}
 
@@ -164,5 +183,19 @@ class Kpm_Counter_Public
 
 		// wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/kpm-counter-public.js', array( 'jquery' ), $this->version, false );
 
+	}
+
+
+	/**
+	 * Template for the Single Page-App
+	 *
+	 * @since    1.0.0
+	 */
+	public function page_template($page_template)
+	{
+		if (is_page('kpm-counter')) {
+			$page_template = KPM_COUNTER_PLUGIN_PATH . '/templates/page-kpm-counter-index.php';
+		}
+		return $page_template;
 	}
 }

@@ -125,7 +125,7 @@ class Kpm_Counter_JWT extends Kpm_Counter_Singleton
             $algorithm  = $this->algorithm;
             $secret_key = $this->get_secret();
 
-            error_log(__CLASS__ . '->' . print_r($jwt,1));
+            // error_log(__CLASS__ . '->' . print_r($jwt,1));
             $decoded = JWT::decode($jwt, new Key($secret_key, $algorithm));
 
             // Access is granted. Add code of the operation here 

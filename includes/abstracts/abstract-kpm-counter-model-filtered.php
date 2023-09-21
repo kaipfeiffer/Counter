@@ -27,6 +27,7 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
      */
     protected static $class_name = __CLASS__;
 
+
     /**
      * $operators
      * 
@@ -56,8 +57,111 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
 
 
     /**
+     * $user_primary
+     * the name of the primary index of the user-table
+     * 
+     * @var string
+     */
+    protected static $user_primary = 'id';
+
+
+    /**
+     * $user_table_key
+     * 
+     * the key field which is identifies the user in the user-table
+     * 
+     * @var string
+     */
+    protected static $user_table_key;
+
+
+    /**
+     * $user_table_name
+     * the name of the table with the user-id without wp-prefix
+     * 
+     * @var string
+     */
+    protected static $user_table_name;
+
+
+    /**
      * PRIVATE METHODS
      */
+
+
+    /**
+     * @function get_user
+     * 
+     * gets the user id
+     * 
+     * @return string|int  the user ID
+     */
+    protected static function get_user()
+    {
+        return static::$user;
+    }
+
+
+    /**
+     * @function get_user_related_ids
+     * 
+     * gets the ids of the rows belongeing to the user
+     * 
+     * @return array the matched ids
+     */
+    protected static function get_user_related_ids($prefix = '')
+    {
+        global $wpdb;
+
+        $ids    = array();
+
+        $sql    = sprintf(
+            'SELECT
+                    `%1$s`
+                FROM
+                    `%2$s`
+                WHERE
+                    `%3$s` = "%4$s";',
+            static::$user_primary,
+            static::get_tablename(static::$user_table_name),
+            static::$user_table_key,
+            static::$user
+        );
+
+        $result = $wpdb->get_results($sql);
+        foreach ($result as $row) {
+            array_push($ids, $row->{static::$user_primary});
+        }
+        return $ids;
+    }
+
+
+    /**
+     * @function get_user_query
+     * 
+     * gets the query string, wchich identify columns that belong to the user
+     * 
+     * @return string  the query string
+     */
+    protected static function get_user_query($prefix = '')
+    {
+        $prefix         = '' < $prefix ? '`' . $prefix . '`.' : '';
+        if (
+            isset(static::$user_table_name) && '' < static::$user_table_name &&
+            isset(static::$user_table_key) && '' < static::$user_table_key &&
+            isset(static::$user_primary) && '' < static::$user_primary
+        ) {
+            $ids        = static::get_user_related_ids();
+            $user_query = sprintf($prefix . '`%1$s` IN ("%2$s") ', static::$user_column, implode('","', $ids));
+        } else {
+            $user_query = '%d' === static::$columns[static::$user_column] ?
+                $prefix . '`%1$s`= %2$d ' :
+                sprintf($prefix . '`%%1$s`= "%s" ', static::$columns[static::$user_column]);
+            $user_query = sprintf($user_query, static::$user_column, static::$user);
+        }
+
+        return $user_query;
+    }
 
 
 
@@ -65,6 +169,38 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
     /**
      * PUBLIC METHODS
      */
+
+    /**
+     * @function create_multi
+     * 
+     * add multiple new rows to the table
+     * 
+     * @param   array       array with rows to insert
+     * @return  int|null    if successful, the number of inserted records
+     */
+    public static function create_multi($rows)
+    {
+        $allowed_rows   = array();
+        $allowed_ids    = static::get_user_related_ids();
+        $result         = null;
+
+        error_log(__CLASS__ . '->' . __FUNCTION__ . '->$allowed_ids ' . print_r($allowed_ids,1) . ' '.static::$user_column);
+        // Alle Zeilen durchgehen und nur die passenden Keys auslesen
+        foreach($rows as $row){
+
+            error_log(__CLASS__ . '->' . __FUNCTION__ . '->id ' . $row[static::$user_column]);
+            if(in_array($row[static::$user_column],$allowed_ids)){
+                array_push($allowed_rows,array_merge(static::get_defaults(), $row));
+            }
+        }
+
+        error_log(__CLASS__ . '->' . __FUNCTION__ . '->$allowed_rows ' . print_r($allowed_rows,1) . ' ');
+        if(count($allowed_rows)){
+            $result = parent::create_multi($allowed_rows);
+        }
+
+        return $result;
+    }
 
 
     /**
@@ -89,13 +225,13 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
                 FROM
                     `%2$s`
                 WHERE
-                    `%3$s` = %4$d
+                    -- query for user relateted identifiers
+                    %3$s
                 LIMIT
-                    %5$d,%6$d;',
+                    %4$d,%5$d;',
             implode('`,`', array_keys(static::$columns)),
             static::get_tablename(),
-            static::$user_column,
-            static::$user,
+            static::get_user_query(),
             $page * $page_size,
             $page_size
         );
@@ -149,20 +285,18 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
                 FROM
                     `%2$s`
                 WHERE
-                    `%3$s` = %4$d
+                    -- query for user relateted identifiers
+                    %3$s
                 AND
-                   ( %5$s )
-                    %6$s;',
+                   ( %4$s )
+                    %5$s;',
             implode('`,`', array_keys(static::$columns)),
             static::get_tablename(),
-            static::$user_column,
-            static::$user,
+            static::get_user_query(),
             implode($operator, static::get_where($where)),
             $pagination
         );
 
-        error_log(__CLASS__ . $sql);
-        error_log(__CLASS__ . $wpdb->prepare($sql, array_values($where)));
         // if a single row ist queried
         if ($id) {
             $result = $wpdb->get_row($wpdb->prepare($sql, array_values($where)));
@@ -179,19 +313,22 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
      * set the values of the where statements
      * 
      * @param   array   columns with the values to set
+     * @param   string  prefix to identify table (optional)
      * @return  array   list with statements
      */
-    protected static function get_where($where,)
+    protected static function get_where($where, $prefix = '')
     {
         global $wpdb;
 
         $where_stmts    = array();
+        $prefix         = '' < $prefix ? '`' . $prefix . '`.' : '';
 
+        error_log(__CLASS__ . '->' . __FUNCTION__);
         // if an integer is submitted
         if (!is_array($where) && intval($where)) {
             $id     = $where;
             $sql    = sprintf(
-                '`%1$s` = %2$s',
+                $prefix . '`%1$s` = %2$s',
                 static::$primary,
                 static::$columns[static::$primary]
             );
@@ -199,7 +336,7 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
             $where_stmts[]  = $wpdb->prepare($sql, $id);
         }
         // an array was submitted
-        else {
+        elseif (is_array($where)) {
             foreach ($where as $key => $value) {
                 $operator    = '=';
                 // Falls $value ein Array ist,
@@ -211,7 +348,7 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
                     $value      = $value['value'];
                 }
                 $sql    = sprintf(
-                    '`%1$s` %2$s %3$s',
+                    $prefix . '`%1$s` %2$s %3$s',
                     $key,
                     $operator,
                     static::$columns[$key]
@@ -221,5 +358,28 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
             }
         }
         return $where_stmts;
+    }
+
+
+    /**
+     * @function update
+     * 
+     * updates a new row of the table
+     * 
+     * @param   array       associative array with key => value pairs for update
+     * @return  array|null  if successful, the stored data row
+     */
+    public static function update($columns, $where = null)
+    {
+        if (static::read(array(static::$primary => $columns[static::$primary]))) {
+            return parent::update($columns, $where);
+        } else {
+            $error = new \WP_Error(
+                'rest_post_invalid_id',
+                __(static::$error503, ''),
+                array('status' => 503)
+            );
+            return $error;
+        }
     }
 }

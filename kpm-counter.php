@@ -84,6 +84,21 @@ register_deactivation_hook( __FILE__, 'deactivate_kpm_counter' );
 require plugin_dir_path( __FILE__ ) . 'includes/class-kpm-counter.php';
 
 /**
+ * create function array_is_list
+ * 
+ * überprüft, ob ein angegebenes Array einen numerischen Index hat
+ */
+if (!function_exists('array_is_list')) {
+    function array_is_list(array $arr)
+    {
+        if ($arr === []) {
+            return true;
+        }
+        return array_keys($arr) === range(0, count($arr) - 1);
+    }
+}
+
+/**
  * Begins execution of the plugin.
  *
  * Since everything within the plugin is registered via hooks,

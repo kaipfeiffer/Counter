@@ -8,10 +8,10 @@
         {{ counter.name }}
       </h2>
     </header>
-    <div v-if="!loading && counter">
+    <div class="counter-view" v-if="!loading && counter">
 
       <SortableTable :rows="getReadings"
-        :head='[{ title: "ID", column: "id" }, { title: "Zählerstand", column: "reading" }, { title: "Datum", column: "date" }]'>
+        :head='[{ title: null, links: [{ title: "bearbeiten", route: "reading", index: "id" }] }, { title: "Datum", column: "date" }, { title: "Zählerstand", column: "reading", class: "right" }]'>
       </SortableTable>
 
     </div>
@@ -34,13 +34,16 @@ export default defineComponent({
       let counter = getCounter(route.params.id);
       return counter;
     });
+    const editEntry = (id) => {
+      console.log("editEntry,id");
+    }
     const getReadings = computed(() => {
       let readings = [];
       let reading = {};
       console.log(counter.value.readings);
       for (let i = 0; i < counter.value.readings.length; i++) {
         reading = { ...counter.value.readings[i] };
-        console.log(readings);
+        // console.log(readings);
         reading["reading"] = (reading["reading"] * 1).toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -67,7 +70,7 @@ export default defineComponent({
       const id = route.params.id
     })
 
-    return { counter, loading, getReadings }
+    return { counter, loading, getReadings, editEntry }
   },
   watch: {
     counter: {
@@ -81,3 +84,12 @@ export default defineComponent({
   }
 });
 </script>
+<style>
+.counter-view .right {
+  text-align: right;
+  display: inline-block;
+  width: 80%;
+  padding: 5px 10px;
+  margin: 0 auto;
+}
+</style>
