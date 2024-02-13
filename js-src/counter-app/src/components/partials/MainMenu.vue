@@ -8,11 +8,11 @@ const userStore = useUserStore();
     <nav>
         <ul>
             <li class="left">
-                <RouterLink to="/">Home</RouterLink>
+                <RouterLink :to="{ name: 'home' }">Home</RouterLink>
             </li>
             <li class="right">
-                <RouterLink to="/login" v-if="!userStore.user">Login</RouterLink>
-                <RouterLink to="/login" v-if="userStore.user" @click="userStore.logout">Logout</RouterLink>
+                <RouterLink :to="{ name: 'login' }" v-if="!userStore.user">Login</RouterLink>
+                <RouterLink :to="{ name: 'login' }" v-if="userStore.user" @click="userStore.logout">Logout</RouterLink>
             </li>
         </ul>
     </nav>

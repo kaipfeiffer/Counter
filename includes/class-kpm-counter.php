@@ -154,13 +154,15 @@ class Kpm_Counter
 	private function define_admin_hooks()
 	{
 		if (is_admin()) {
-			error_log(__CLASS__ . '->' . __FUNCTION__ . '-> IS ADMIN');
+			// error_log(__CLASS__ . '->' . __FUNCTION__ . '-> IS ADMIN');
 			$plugin_admin = new Kpm_Counter_Admin($this->get_plugin_name(), $this->get_version());
 
-			$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
-			$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
+			// $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
+			// $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
+			
 			$this->loader->add_action('personal_options', $plugin_admin, 'personal_options');
 			$this->loader->add_action('personal_options_update', $plugin_admin, 'personal_options_update');
+			$this->loader->add_action('edit_user_profile_update', $plugin_admin, 'personal_options_update');
 		}
 	}
 
@@ -177,17 +179,21 @@ class Kpm_Counter
 	private function define_public_hooks()
 	{
 
+		// error_log(__CLASS__.'->'.__LINE__.' => '.'PUBLIC');
 		$plugin_public = new Kpm_Counter_Public($this->get_plugin_name(), $this->get_version());
 
+
+		// error_log(__CLASS__.'->'.__LINE__.' => '.is_callable([$plugin_public, 'register_rest_routes']));
 		$this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
 		$this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
 		$this->loader->add_action('rest_api_init', $plugin_public, 'register_rest_routes');
 		$this->loader->add_action('rest_api_init', $plugin_public, 'init_cors', 15);
-
-		$this->loader->add_filter('page_template', $plugin_public, 'page_template');
+		$this->loader->add_action('init', $plugin_public, 'init', 15);
+		$this->loader->add_action('parse_request', $plugin_public, 'request', 15);
+		$this->loader->add_filter('single_template', $plugin_public, 'single_template');
 
 		// Enable API-Endpoints if Disable-Rest-Api is activated
-		$this->loader->add_filter('disable_wp_rest_api_server_var', $plugin_public, 'disable_wp_rest_api_server_var_custom');
+		// $this->loader->add_filter('disable_wp_rest_api_server_var', $plugin_public, 'disable_wp_rest_api_server_var_custom');
 	}
 
 	/**

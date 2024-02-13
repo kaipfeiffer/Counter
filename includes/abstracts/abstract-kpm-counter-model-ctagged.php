@@ -98,7 +98,15 @@ abstract class Kpm_Counter_Model_Ctagged extends Kpm_Counter_Model_Filtered
                 $row->{static::$ctag_primary}
             );
 
-            $result = $wpdb->update(static::get_tablename(static::$ctag_table_name), array(static::$ctag_column => $row->{static::$ctag_column}), array(static::$ctag_primary => $row->{self::$ctag_primary}));
+            $update_params  = array(static::$ctag_column => $row->{static::$ctag_column});
+            $query_params   = array(static::$ctag_primary => $row->{self::$ctag_primary});
+            // error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($update_params,1).'-'.print_r($query_params,1));
+            
+            $result = $wpdb->update(
+                static::get_tablename(static::$ctag_table_name),
+                $update_params,
+                $query_params
+            );
 
             if ($result) {
                 $ctag   = $row->{static::$ctag_column};
@@ -114,6 +122,25 @@ abstract class Kpm_Counter_Model_Ctagged extends Kpm_Counter_Model_Filtered
      * PUBLIC METHODS
      */
 
+
+    /**
+     * @function create
+     * 
+     * add a new row to the table
+     * 
+     * @param   array       associative array with key => value pairs for insertion
+     * @return  array|null  if successful, the stored data row
+     */
+    public static function create($columns)
+    {
+        $ctag   = static::get_ctag();
+        $columns[static::$ctag_column]  = $ctag;
+
+        $result  = parent::create($columns);
+        return $result;
+    }
+
+
     /**
      * @function create_multi
      * 
@@ -125,11 +152,11 @@ abstract class Kpm_Counter_Model_Ctagged extends Kpm_Counter_Model_Filtered
     public static function create_multi($rows)
     {
         $ctag   = static::get_ctag();
-        foreach($rows as $index => $row){
+        foreach ($rows as $index => $row) {
             $row[static::$ctag_column]  = $ctag;
             $rows[$index]               = $row;
         }
-        $result= parent::create_multi($rows);
+        $result = parent::create_multi($rows);
 
         return $result;
     }
@@ -183,9 +210,12 @@ abstract class Kpm_Counter_Model_Ctagged extends Kpm_Counter_Model_Filtered
 
         list($chunk_list, $placeholders)   = static::set_values($columns);
 
+        $wpdb->show_errors     = true;
+        $wpdb->suppress_errors = false;
         $result = $wpdb->update(static::get_tablename(), $chunk_list, $where, $placeholders);
 
-        // error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($chunk_list, 1));
+        error_log(__CLASS__ . '->' . __LINE__ . '->' . $result . '|' . print_r($wpdb->last_query, 1));
+        error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($chunk_list, 1) . '->' . print_r($where, 1) . '->' . print_r($placeholders, 1));
         // if update was successful
         if (!$result) {
             $error = new \WP_Error(
@@ -204,6 +234,7 @@ abstract class Kpm_Counter_Model_Ctagged extends Kpm_Counter_Model_Filtered
             list($chunk_list, $placeholders)   = static::set_values($columns);
 
             $result = $wpdb->update(static::get_tablename(), $chunk_list, $where, $placeholders);
+            error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($wpdb->last_query, 1));
 
             $user_table_columns  = $user_table_where = array(
                 static::$user_primary   => $columns[static::$user_column]
@@ -214,6 +245,7 @@ abstract class Kpm_Counter_Model_Ctagged extends Kpm_Counter_Model_Filtered
             error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($user_table_columns, 1));
             error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($user_table_where, 1));
             $wpdb->update(static::get_tablename(static::$user_table_name), $user_table_columns, $user_table_where);
+            error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($wpdb->last_query, 1));
         }
 
         $row = static::read(array(static::$primary => $columns[static::$primary]));

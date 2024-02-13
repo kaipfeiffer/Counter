@@ -54,24 +54,24 @@ class Kpm_Counter_Public
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 	}
-	
+
 	/**
 	 * Enable the API-Endpoints of this Plugin
 	 *
 	 * @since    1.0.0
 	 */
-	public function disable_wp_rest_api_server_var_custom($var) { 
-	
+	public function disable_wp_rest_api_server_var_custom($var)
+	{
+
 		// Example
 		return array(
 			'/wp-json/contact-form-7/v1/contact-forms/1757/refill',
 			'/wp-json/contact-form-7/v1/contact-forms/1757/refill/',
-			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback', 
-			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback/', 
-			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback/schema', 
+			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback',
+			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback/',
+			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback/schema',
 			'/wp-json/contact-form-7/v1/contact-forms/1757/feedback/schema/'
-		); 
-		
+		);
 	}
 
 	/**
@@ -82,6 +82,7 @@ class Kpm_Counter_Public
 	public function register_rest_routes()
 	{
 
+		// error_log(__CLASS__.'->'.__LINE__.' => '.__FUNCTION__);
 		$models = array(
 			// 'Kpm_Counter_Adresses_Controller',
 			'Kpm_Counter_Login_Controller',
@@ -92,11 +93,80 @@ class Kpm_Counter_Public
 		foreach ($models as $model) {
 			$class =  KPM_COUNTER_PLUGIN_PATH . 'includes/classes/controllers/class-' . str_replace('_', '-', strtolower($model)) . '.php';
 
-			// error_log(__CLASS__.' => '.$class);
+			// error_log(__CLASS__.'->'.__LINE__.' => '.$class);
 			require_once $class;
 			$model::register_rest_route();
 		}
 	}
+
+	/**
+	 * request
+	 *  
+	 * 
+	 *
+	 * @since    1.0.0
+	 */
+	public function request($request)
+	{
+		// if(is_int(strpos($request->request,'kpmcntr'))){
+		// 	$request->request	= 'kpmcntr';
+		// 	$request->query_vars['page']	= null;
+		// 	$request->query_vars['pagename']	= 'kpmcntr';
+		// }
+		// echo $args .','.$url;
+		// echo '<pre>' . print_r($request, 1) . '</pre>';
+		return $request;
+	}
+
+
+	/**
+	 * pre_get_posts
+	 *  
+	 * 
+	 *
+	 * @since    1.0.0
+	 */
+	public function pre_get_posts($query)
+	{
+		error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($query, 1));
+		// echo '<pre>' . print_r($query, 1) . '</pre>';
+	}
+
+	/**
+	 * init
+	 * 
+	 * 
+	 *
+	 * @since    1.0.0
+	 */
+	public function init()
+	{
+		$options  = get_option(KPM_COUNTER_PREFIX . '_slug_options');
+
+		register_post_type(
+			$options['post_type'],
+			array(
+				'public'          => true,
+			)
+		);
+
+
+		if ($options) {
+			// Base form, will probably not work because it does nothing with the `news` part
+			add_rewrite_rule($options['post_type'] . '/' . $options['app_slug'] . '/.+$', 'index.php?p=' . $options['app_post_id'], 'top');
+
+			// add_rewrite_rule('^/'.$options['app_slug'] . '/?$}', 'index.php?p=' . $options['app_post_id'], 'top');
+
+			// Use this instead if `news` is a page
+
+			if (get_option(KPM_COUNTER_PREFIX . '_flush_plugin_permalinks', false)) {
+				delete_option(KPM_COUNTER_PREFIX . '_flush_plugin_permalinks');
+				error_log(__CLASS__ . '->' . __LINE__ . '->Flush');
+				flush_rewrite_rules();
+			}
+		}
+	}
+
 
 	/**
 	 * init_cors
@@ -191,10 +261,15 @@ class Kpm_Counter_Public
 	 *
 	 * @since    1.0.0
 	 */
-	public function page_template($page_template)
+	public function single_template($page_template)
 	{
-		if (is_page('kpm-counter')) {
-			$page_template = KPM_COUNTER_PLUGIN_PATH . '/templates/page-kpm-counter-index.php';
+		$options  = get_option(KPM_COUNTER_PREFIX . '_slug_options');
+		// if ($options && is_page($options['app_slug'])) {
+		global $post;
+		error_log(__CLASS__.'->'.__LINE__.'->'.strtolower(KPM_COUNTER_PLUGIN_NAME).' === '.$post->post_type);
+		if ($options['post_type'] === $post->post_type) {
+			error_log(__CLASS__ . '->' . __LINE__ . '-> is page');
+			$page_template = KPM_COUNTER_PLUGIN_PATH . '/templates/single-kpm-counter.php';
 		}
 		return $page_template;
 	}

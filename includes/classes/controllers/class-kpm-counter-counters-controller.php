@@ -71,8 +71,6 @@ class Kpm_Counter_Counters_Controller extends Kpm_Counter_Controller
      */
     public static function register_rest_route()
     {
-        // Datenbank-Klasse einbinden
-        parent::register_rest_route();
 
         register_rest_route(static::$route, '/' . static::$target . '/', array(
             'methods' => WP_REST_Server::READABLE,
@@ -87,12 +85,17 @@ class Kpm_Counter_Counters_Controller extends Kpm_Counter_Controller
         register_rest_route(static::$route, '/' . static::$target . '/ctag/(?P<ctag>\d+)', array(
             'methods' => WP_REST_Server::READABLE,
             'callback' => __CLASS__ . '::get',
-            // 'permission_callback' =>  __CLASS__ . '::authenticate',
+            'permission_callback' =>  __CLASS__ . '::authenticate',
         ));
         register_rest_route(static::$route, '/' . static::$target . '/', array(
             'methods' => WP_REST_Server::EDITABLE,
             'callback' => __CLASS__ . '::edit',
+            'permission_callback' =>  __CLASS__ . '::authenticate',
         ));
+
+        // Datenbank-Klasse einbinden
+        static::include_database_class();
+        // parent::register_rest_route();
     }
     
 }

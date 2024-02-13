@@ -66,6 +66,16 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
 
 
     /**
+     * $user_related_ids
+     * 
+     * Zulässige IDs, die in der Spalte $user_column vorkommen dürfen
+     * 
+     * @var string
+     */
+    protected static $user_related_ids;
+
+
+    /**
      * $user_table_key
      * 
      * the key field which is identifies the user in the user-table
@@ -113,26 +123,36 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
     {
         global $wpdb;
 
-        $ids    = array();
+        // if there are no $user_related_ids present
+        if (!static::$user_related_ids) {
+            // isf ther is a key to a different table
+            if (isset(static::$user_table_key)) {
+                $ids    = array();
 
-        $sql    = sprintf(
-            'SELECT
+                $sql    = sprintf(
+                    'SELECT
                     `%1$s`
                 FROM
                     `%2$s`
                 WHERE
                     `%3$s` = "%4$s";',
-            static::$user_primary,
-            static::get_tablename(static::$user_table_name),
-            static::$user_table_key,
-            static::$user
-        );
+                    static::$user_primary,
+                    static::get_tablename(static::$user_table_name),
+                    static::$user_table_key,
+                    static::$user
+                );
 
-        $result = $wpdb->get_results($sql);
-        foreach ($result as $row) {
-            array_push($ids, $row->{static::$user_primary});
+                $result = $wpdb->get_results($sql,ARRAY_A);
+                foreach ($result as $row) {
+                    array_push($ids, $row[static::$user_primary]);
+                }
+                static::$user_related_ids = $ids;
+            }
+            else{
+                static::$user_related_ids = array(static::$user);
+            }
         }
-        return $ids;
+        return static::$user_related_ids;
     }
 
 
@@ -171,6 +191,32 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
      */
 
     /**
+     * @function create
+     * 
+     * add a new row to the table
+     * 
+     * @param   array       associative array with key => value pairs for insertion
+     * @return  array|null  if successful, the stored data row
+     */
+    public static function create($columns)
+    {
+        $allowed_ids    = static::get_user_related_ids();
+        $result         = null;
+
+
+        if (in_array($columns[static::$user_column], $allowed_ids)) {
+            $result  = parent::create($columns);
+        }
+        elseif(in_array(static::$user, $allowed_ids) && !(isset(static::$user_table_name))){
+            $columns[static::$user_column] = static::$user;
+            $result  = parent::create($columns);
+        }
+
+        return $result;
+    }
+
+
+    /**
      * @function create_multi
      * 
      * add multiple new rows to the table
@@ -184,18 +230,18 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
         $allowed_ids    = static::get_user_related_ids();
         $result         = null;
 
-        error_log(__CLASS__ . '->' . __FUNCTION__ . '->$allowed_ids ' . print_r($allowed_ids,1) . ' '.static::$user_column);
+        error_log(__CLASS__ . '->' . __FUNCTION__ . '->$allowed_ids ' . print_r($allowed_ids, 1) . ' ' . static::$user_column);
         // Alle Zeilen durchgehen und nur die passenden Keys auslesen
-        foreach($rows as $row){
+        foreach ($rows as $row) {
 
             error_log(__CLASS__ . '->' . __FUNCTION__ . '->id ' . $row[static::$user_column]);
-            if(in_array($row[static::$user_column],$allowed_ids)){
-                array_push($allowed_rows,array_merge(static::get_defaults(), $row));
+            if (in_array($row[static::$user_column], $allowed_ids)) {
+                array_push($allowed_rows, array_merge(static::get_defaults(), $row));
             }
         }
 
-        error_log(__CLASS__ . '->' . __FUNCTION__ . '->$allowed_rows ' . print_r($allowed_rows,1) . ' ');
-        if(count($allowed_rows)){
+        error_log(__CLASS__ . '->' . __FUNCTION__ . '->$allowed_rows ' . print_r($allowed_rows, 1) . ' ');
+        if (count($allowed_rows)) {
             $result = parent::create_multi($allowed_rows);
         }
 
@@ -237,7 +283,7 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
         );
 
         error_log(__CLASS__ . '->' . __FUNCTION__ . '-> SQL:' . $sql);
-        $result = $wpdb->get_results($sql);
+        $result = $wpdb->get_results($sql,ARRAY_A);
 
         return $result;
     }
@@ -297,12 +343,15 @@ abstract class Kpm_Counter_Model_Filtered extends Kpm_Counter_Model
             $pagination
         );
 
+        error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '->' . $sql . '->' . print_r($where, 1));
+
         // if a single row ist queried
         if ($id) {
-            $result = $wpdb->get_row($wpdb->prepare($sql, array_values($where)));
+            $result = $wpdb->get_row($wpdb->prepare($sql, $where),ARRAY_A);
         } else {
-            $result = $wpdb->get_results($wpdb->prepare($sql, array_values($where)));
+            $result = $wpdb->get_results($wpdb->prepare($sql, $where),ARRAY_A);
         }
+
         return $result;
     }
 

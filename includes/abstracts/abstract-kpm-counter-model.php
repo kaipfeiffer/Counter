@@ -182,7 +182,7 @@ abstract class Kpm_Counter_Model
      * 
      * liefert den Tabellennamen mit dem Prefix der Wordpress-Installation zurück
      */
-    protected static function get_tablename($table_name = null)
+    public static function get_tablename($table_name = null)
     {
         global $wpdb;
 
@@ -281,13 +281,13 @@ abstract class Kpm_Counter_Model
         // Die Felder in einem Rutsch in die Datenbank eintragen
         foreach ($rows as $row) {
             list($chunklist, $placeholders) = static::set_values($row);
-            array_push($inserts, '('.implode(',',$placeholders).')');
+            array_push($inserts, '(' . implode(',', $placeholders) . ')');
             array_push($values, ...array_values($chunklist));
         }
 
-        $sql    = 'INSERT INTO `' . static::get_tablename() . '` (`' . implode('`,`',array_keys($chunklist)) . '`) VALUES ' . implode(',', $inserts) . ';';
+        $sql    = 'INSERT INTO `' . static::get_tablename() . '` (`' . implode('`,`', array_keys($chunklist)) . '`) VALUES ' . implode(',', $inserts) . ';';
         error_log(__CLASS__ . '->' . __LINE__ . $sql);
-        $result = $wpdb->query($wpdb->prepare($sql,$values));
+        $result = $wpdb->query($wpdb->prepare($sql, $values));
 
         return $result;
     }
@@ -314,9 +314,11 @@ abstract class Kpm_Counter_Model
         // set only supported keys and retrieve prepare-placeholders
         list($chunk_list, $placeholders)   = static::set_values($columns);
 
+        error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '->' . print_r($chunk_list, 1) . '->' . print_r($placeholders, 1));
         $result = $wpdb->insert(static::get_tablename(), $chunk_list, $placeholders);
         if ($result) {
-            $row = static::read($wpdb->insert_id);
+            error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '->' . $result . '->' . $wpdb->insert_id);
+            $row = static::read($wpdb->insert_id,);
         }
         return $row;
     }
@@ -401,7 +403,7 @@ abstract class Kpm_Counter_Model
             $page_size
         );
 
-        $result = $wpdb->get_results($sql);
+        $result = $wpdb->get_results($sql,ARRAY_A);
 
         return $result;
     }
@@ -471,6 +473,28 @@ abstract class Kpm_Counter_Model
                 $wpdb->query($sql);
             }
         }
+    }
+
+
+    /**
+     * @function raw_sql
+     * 
+     * get result of a raw sql-statement
+     * 
+     * @param string                    statement
+     * @param array|null                values
+     * @return array|object|null|void   the fetched data row
+     */
+    public static function raw_sql($stmt, $params = null)
+    {
+        global $wpdb;
+        if ($params) {
+            $stmt   = $wpdb->prepare($stmt, array_values($params));
+        }
+        error_log(__CLASS__ . '->' . __LINE__ . '->' . $stmt);
+        $result = $wpdb->get_results($stmt,ARRAY_A);
+
+        return $result;
     }
 
 
@@ -551,9 +575,9 @@ abstract class Kpm_Counter_Model
         error_log(__CLASS__ . $wpdb->prepare($sql, array_values($where)));
         // if a single row ist queried
         if ($id) {
-            $result = $wpdb->get_row($wpdb->prepare($sql, array_values($where)));
+            $result = $wpdb->get_row($wpdb->prepare($sql, array_values($where)),ARRAY_A);
         } else {
-            $result = $wpdb->get_results($wpdb->prepare($sql, array_values($where)));
+            $result = $wpdb->get_results($wpdb->prepare($sql, array_values($where)),ARRAY_A);
         }
         return $result;
     }
@@ -612,8 +636,9 @@ abstract class Kpm_Counter_Model
 
             $result = $wpdb->update(static::get_tablename(), $chunk_list, $where, $placeholders);
 
-            // error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($chunk_list, 1));
+            error_log(__CLASS__ . '->' . __LINE__ . '->' . static::get_tablename() . '->' . print_r($chunk_list, 1) . '->' . print_r($where, 1) . '->' . print_r($placeholders, 1));
             // if update was successful
+            error_log(__CLASS__ . '->' . __LINE__ . '->' . print_r($wpdb->last_query, 1));
             if ($result) {
                 // $row = static::read($chunk_list);
                 $row = static::read(array(static::$primary => $columns[static::$primary]));
@@ -621,6 +646,7 @@ abstract class Kpm_Counter_Model
         } else {
             // throw error
         }
+        error_log(__CLASS__ . '->' . __LINE__ . '->' . static::get_tablename() . '->' . print_r($row, 1));
         return $row;
     }
 }

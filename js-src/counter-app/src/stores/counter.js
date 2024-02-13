@@ -4,7 +4,11 @@ import { api } from "@/modules/auth-api";
 import { useUserStore } from "@/stores/user";
 import { setDecimalPlaces } from "@/modules/tools";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const server =
+  0 <= window.location.href.indexOf("http://localhost")
+    ? "http://localhost:8180"
+    : "";
+const baseUrl = server + `${import.meta.env.VITE_API_URL}`;
 
 export const useCounterStore = defineStore("counter_store", () => {
   const usersStore = useUserStore();
@@ -13,20 +17,47 @@ export const useCounterStore = defineStore("counter_store", () => {
    */
   const readings = ref({});
   const counters = ref({});
+  const measures = ref({1:"kw/h",2:"qbm",3:"l",4:"kg",5:"t",6:"fm",7:"rm",8:"srm"});
+  const type = ref(1);
   const current = ref({});
   const getForm = computed(() => {
     let dataRow = {};
-    console.log("dataRow");
+
+    // console.log(loginname, usersStore.user.loginname);
+    if (loginname !== usersStore.user.loginname) {
+      counters.value = {};
+      readings.value = {};
+      readcounters(usersStore.user.ctag);
+      readreadings(usersStore.user.ctag);
+      usersStore.setCtag(storeCtag);
+      loginname = usersStore.user.loginname;
+    }
+
     for (let i in counters.value) {
       let counter = counters.value[i];
-      dataRow[i] = {
-        name: counter["name"],
-        reading: setDecimalPlaces(getLastReading(i), 1, "always"),
-        id: counter["id"],
-      };
-      current.value[counter["id"]] = null;
+      current.value = {};
+      // console.log(
+      //   counter,
+      //   type.value,
+      //   parseInt(counter.type),
+      //   parseInt(type.value)
+      // );
+      if (
+        null === type.value ||
+        parseInt(counter.type) === parseInt(type.value)
+      ) {
+        // console.log("inner");
+        dataRow[i] = {
+          name: counter["name"],
+          reading: setDecimalPlaces(getLastReading(i), 1, "always"),
+          consumption: setDecimalPlaces(getLastReading(i), 1, "always"),
+          measure: counter["measure"]? measures.value[counter["measure"]] : "",
+          id: counter["id"],
+        };
+        current.value[counter["id"]] = null;
+      }
     }
-    console.log(dataRow);
+    // console.log(dataRow);
     return dataRow;
   });
   const loading = ref(true);
@@ -34,6 +65,7 @@ export const useCounterStore = defineStore("counter_store", () => {
   const page_size = ref(500);
 
   let storeCtag = usersStore.user.ctag;
+  let loginname = usersStore.user.loginname;
 
   /**
    * read
@@ -79,27 +111,29 @@ export const useCounterStore = defineStore("counter_store", () => {
         // Daten als Objekt mit der Zaehler-Id speichern
         for (let i = 0; i < data.length; i++) {
           buffer[data[i]["id"]] = data[i];
-          if (data[i]["ctag"] * 1 > usersStore.user.ctag * 1) {
-            console.log(data[i]);
-            console.log(data[i]["ctag"]);
+          // if (data[i]["ctag"] * 1 > usersStore.user.ctag * 1) {
+          if (data[i]["ctag"] * 1 > storeCtag * 1) {
+            // console.log(data[i]);
+            // console.log("storeCtag",data[i]["ctag"]);
             storeCtag = data[i]["ctag"];
           }
         }
         // Nächste Seite vormerken
         params.page++;
 
-        console.log(
-          target +
-            "-> " +
-            storeCtag +
-            " -> " +
-            data.length +
-            " === " +
-            params.page_size
-        );
+        // console.log(
+        //   target +
+        //     "-> " +
+        //     storeCtag +
+        //     " -> " +
+        //     data.length +
+        //     " === " +
+        //     params.page_size
+        // );
       }
     } while (data.length === params.page_size);
 
+    usersStore.setCtag(storeCtag);
     // Daten im Localstorage speichern
     localStorage.setItem(target, JSON.stringify(buffer));
 
@@ -114,30 +148,103 @@ export const useCounterStore = defineStore("counter_store", () => {
    *
    * @param array reading
    */
-  async function saveReadings(readings) { 
+  async function saveReadings(readings) {
     var result;
 
-    console.log("Readings:Value",readings);
+    for (let i in readings) {
+      // if no reading ist present
+      if (!readings[i].reading && !readings[i].consumption) {
+        // remove counter
+        delete readings[i];
+      }
+    }
+    console.log("Readings:Value", readings);
     result = await api.post(`${baseUrl}readings`, readings);
+    if (0 < result) {
+      readcounters(usersStore.user.ctag);
+      readreadings(usersStore.user.ctag);
+      usersStore.setCtag(storeCtag);
+    }
     console.log(result);
-   }
+  }
 
   /**
-   * getLastReading
+   * saveCounter
    *
-   * liest den ketzten Eintrag eines Zaehlera aus
+   * speichert den übermittelten Zähler
+   *
+   * @param array counter
+   */
+  async function saveCounter(counter) {
+    var result;
+    var touched = counter.touched;
+
+    delete counter.touched;
+
+    if (counter?.id) {
+      result = await api.put(`${baseUrl}counters`, counter);
+    } else {
+      result = await api.post(`${baseUrl}counters`, counter);
+    }
+
+    console.log("Counter", result);
+    // Wenn neues ctag
+    if (result instanceof Array && result.length) {
+      let row = result.shift();
+      if (row.ctag && row.ctag * 1 > storeCtag * 1) {
+        let readings = counters.value[row.id]?.readings;
+
+        counters.value[row.id] = { ...row, readings: readings };
+
+        // Counter-Eintrag aus Local-Storage auslesen, ...
+        let ls_counters = JSON.parse(localStorage.getItem("counters"));
+        // ... anpassen ...
+        ls_counters[row.id] = { ...row };
+
+        // ... Werte encoden ...
+        let counters_str = JSON.stringify({ ...ls_counters });
+        // ... und speichern
+        localStorage.setItem("counters", counters_str);
+
+        // Falls keine zwischenzeitlichen Änderungen erfolgt sind
+        if (row.ctag * 1 === storeCtag * 1 + 1) {
+          storeCtag = row.ctag;
+          // aktuelles ctag im User-Store sichern
+          usersStore.setCtag(storeCtag);
+        }
+      }
+      return row;
+    } else {
+      if (touched) {
+        counter.touched = touched;
+        return counter;
+      }
+    }
+    // Wenn ctag genau um 1 höher ist
+    // ctag anpassen
+  }
+
+  /**
+   * saveReading
+   *
+   * speichert den übermittelten Zählerstand
    *
    * @param array reading
    */
   async function saveReading(reading) {
     var result;
+    var touched = reading.touched;
 
+    delete reading.touched;
+
+    console.log("Reading", {...reading});
     if (reading?.id) {
       result = await api.put(`${baseUrl}readings`, reading);
     } else {
       result = await api.post(`${baseUrl}readings`, reading);
     }
 
+    console.log("Counter", result);
     // Wenn neues ctag
     if (result instanceof Array && result.length) {
       let row = result.shift();
@@ -153,22 +260,51 @@ export const useCounterStore = defineStore("counter_store", () => {
 
         // Key fürs JSON entfernen, weil dessen Einträge auf die
         // Zählerstände verweisen, was beim JSON.stringify einen Fehler erzeugt
-        delete (readings?.value?.counters);
+        delete readings?.value?.counters;
 
         // Werte encoden
-        let readings_str = JSON.stringify({...readings.value});
+        let readings_str = JSON.stringify({ ...readings.value });
         // und speichern
         localStorage.setItem("readings", readings_str);
 
+        console.log("Counters:", counters[row.counter_id].length);
+        let i = 0;
+        while (
+          counters[row.counter_id][i] &&
+          counters[row.counter_id][i].id != row.id &&
+          i < counters[row.counter_id].length
+        ) {
+          i++;
+        }
+        if (i < counters[row.counter_id].length) {
+          counters[row.counter_id][i] = row;
+        } else {
+          counters[row.counter_id].push(row);
+        }
+        let current_reading = counters[row.counter_id].find(function (row) {
+          if (row.id === this) {
+            return true;
+          }
+          return false;
+        }, row.id);
+        // current_reading.value = {...row};
+
+        console.log("Counter", current_reading);
         // Eintrag "counters" wiederherstellen
         readings.value.counters = counters;
 
-        // Falls der keine zwischenzeitlichen Änderungen erfolgt sind
+        // Falls keine zwischenzeitlichen Änderungen erfolgt sind
         if (row.ctag * 1 === storeCtag * 1 + 1) {
           storeCtag = row.ctag;
           // aktuelles ctag im User-Store sichern
           usersStore.setCtag(storeCtag);
         }
+      }
+      return row;
+    } else {
+      if (touched) {
+        reading.touched = touched;
+        return reading;
       }
     }
     // Wenn ctag genau um 1 höher ist
@@ -178,17 +314,29 @@ export const useCounterStore = defineStore("counter_store", () => {
   /**
    * getLastReading
    *
-   * liest den ketzten Eintrag eines Zaehlera aus
+   * liest den ketzten Eintrag eines Zaehlers aus
    *
    * @param integer counter
    */
   function getLastReading(counter) {
     let result = null;
 
-    if (counter in readings.value.counters) {
+    // console.log(counter, counters.value[counter]);
+
+    if (readings.value && counter in readings.value.counters) {
       let myReadings = readings.value.counters[counter];
       let myReading = myReadings[myReadings.length - 1];
-      result = myReading.reading;
+      switch (counters?.value?.[counter]?.type * 1) {
+        case 2: {
+          result = myReading.consumption;
+          break;
+        }
+        case 1:
+        default:
+          result = myReading.reading;
+      }
+    } else {
+      result = "";
     }
     return result;
   }
@@ -202,8 +350,8 @@ export const useCounterStore = defineStore("counter_store", () => {
    * @param integer page
    */
   async function readcounters(ctag, page) {
+    var counter_types = [];
     counters.value = await read("counters", ctag, page);
-
     // cTag darf noch nicht im usersStore gesichert werden
     // muss eventuell angepasst werden, falls diese Methode
     // nicht nur beim Initialisieren aufgerufen wird
@@ -234,17 +382,12 @@ export const useCounterStore = defineStore("counter_store", () => {
     }
     readings.value = data;
     loading.value = false;
-    usersStore.setCtag(storeCtag);
     // console.log(getForm.value);
   }
 
-  // if (!counterBuffer) {
-  //   console.log("loadCounters");
-  //   readcounters();
-  //   readreadings();
-  // } else {
   readcounters(usersStore.user.ctag);
   readreadings(usersStore.user.ctag);
+  usersStore.setCtag(storeCtag);
   console.log(counters.value);
   // }
 
@@ -253,10 +396,13 @@ export const useCounterStore = defineStore("counter_store", () => {
     current,
     getForm,
     loading,
+    measures,
     page,
     page_size,
     readings,
+    saveCounter,
     saveReading,
     saveReadings,
+    type,
   };
 });

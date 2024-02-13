@@ -16,7 +16,7 @@
  * Plugin Name:       Zaehler-Verwaltung
  * Plugin URI:        https://idevo.de
  * Description:       Verwaltet Zählerstände und wertet diese aus
- * Version:           1.0.0
+ * Version:           1.0.3
  * Author:            Kai Pfeiffer
  * Author URI:        https://idevo.de
  * License:           GPL-2.0+
@@ -40,7 +40,7 @@ define( 'KPM_COUNTER_PLUGIN_NAME', 'KPM_COUNTER' );
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'KPM_COUNTER_VERSION', '1.0.0' );
+define( 'KPM_COUNTER_VERSION', '1.0.3' );
 
 /**
  * Currently plugin path.
@@ -48,6 +48,15 @@ define( 'KPM_COUNTER_VERSION', '1.0.0' );
  * Rename this for your plugin and update it as you release new versions.
  */
 define( 'KPM_COUNTER_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
+
+
+/**
+ * Prefix for options.
+ * Start at version 1.0.0 and use SemVer - https://semver.org
+ * Rename this for your plugin and update it as you release new versions.
+ */
+define( 'KPM_COUNTER_PREFIX', 'kpm_counter');
+
 
 /**
  * Currently plugin path.

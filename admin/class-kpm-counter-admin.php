@@ -26,6 +26,7 @@ if (file_exists($class_path)) {
  */
 class Kpm_Counter_Admin
 {
+	private static $admin_menu_slug	= 'kpm_counter_admin_menu';
 
 	/**
 	 * The ID of this plugin.
@@ -116,9 +117,39 @@ class Kpm_Counter_Admin
 	 */
 	public function personal_options_update($userid)
 	{
-		if (isset($_POST['kpm_counter_user_id'])) {
-			$counter_user_id	= intval($_POST['kpm_counter_user_id']);
-			update_user_meta($userid, 'kpm_counter_user_id', $counter_user_id);
+		error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> ID:' . print_r($_POST, 1));
+		if (current_user_can('manage_options')) {
+			if (isset($_POST['kpm_counter_user_id'])) {
+				$counter_user_id	= intval($_POST['kpm_counter_user_id']);
+				update_user_meta($userid, 'kpm_counter_user_id', $counter_user_id);
+			}
+			if (isset($_POST['kpm_counter_is_user'])) {
+				$is_user	= $_POST['kpm_counter_is_user'];
+
+				include_once KPM_COUNTER_PLUGIN_PATH . 'includes/classes/models/class-kpm-counter-customers-model.php';
+				include_once KPM_COUNTER_PLUGIN_PATH . 'includes/classes/models/class-kpm-counter-adresses-model.php';
+				$user	= Kpm_Counter_Customers_Model::read(array('id' => $userid));
+				if (!$user) {
+					$wp_user	= get_user_by('id', $userid);
+					$user_data	= array(
+						'lastname'	=> sanitize_text_field($_POST['last_name']),
+						'firstname'	=> sanitize_text_field($_POST['first_name']),
+						'email'		=> sanitize_email($_POST['email']),
+						'loginname'	=> $wp_user->user_login,
+						'wp_id'		=> intval($userid),
+					);
+					$user_data	= Kpm_Counter_Customers_Model::create($user_data);
+
+					$adress_data	= Kpm_Counter_Adresses_Model::create(['location' => '']);
+					$user_data['adress_id']	= $adress_data['id'];
+					$user_data	= Kpm_Counter_Customers_Model::update($user_data);
+					// $user_data	= array_merge($user_data,$wp_user);
+				}
+				error_log(__CLASS__ . '->' . __LINE__ . '|' . $userid . '->' . print_r($user, 1) . '->' . print_r($user_data, 1) . '->' . print_r($wp_user, 1));
+				update_user_meta($userid, 'kpm_counter_is_user', $is_user);
+			} else {
+				delete_user_meta($userid, 'kpm_counter_is_user');
+			}
 		}
 	}
 
@@ -130,29 +161,33 @@ class Kpm_Counter_Admin
 	 */
 	public function personal_options($user)
 	{
-		$user_id			= $user->ID;
-		$counter_user_id	= get_user_meta($user_id, 'kpm_counter_user_id', true);
-
+		$user_id	= $user->ID;
+		$is_user	= get_user_meta($user_id, 'kpm_counter_is_user', true);
 		// Wenn der Customer-Controller existier
 		if (class_exists('Kpm_Counter_Customers_Model')) {
-			$counter_user_accounts	= Kpm_Counter_Customers_Model::get();
-			error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . print_r($counter_user_accounts, 1));
 ?>
 			<tr>
 				<th scope="row">
-					<?php echo __('Zähler-Nutzer-ID', 'kpm-counter'); ?>
+					<label for="kpm_counter_is_user">
+						<?php echo __('Zähler-Nutzer', 'kpm-counter'); ?>
+					</label>
 				</th>
 				<td>
-					<select name="kpm_counter_user_id">
-						<?php foreach ($counter_user_accounts as $row) { ?>
-							<option value="<?php echo $row->id; ?>" <?php echo ($row->id === $counter_user_id ? 'selected="selected"' : ''); ?>>
-								<?php echo $row->loginname; ?>
-							</option>
-						<?php } ?>
-					</select>
+					<input type="checkbox" id="kpm_counter_is_user" name="kpm_counter_is_user" <?php echo ($is_user ? ' checked="checked" ' : '') ?> <?php echo (current_user_can('manage_options') ?  '' : ' disabled="disabled" ') ?>>
+					<?php
+					if ($is_user) {
+						$options	= get_option(KPM_COUNTER_PREFIX . '_slug_options', array('app_slug' => '','post_type' => strtolower(KPM_COUNTER_PLUGIN_NAME)));
+						$app_post	= get_post($options['app_post_id']);
+					?>
+						<a href="<?php echo $app_post->guid; ?>"><?php echo __('Hier Clicken um die Zaehler-App anzuzeigen', 'kpm-counter') ?></a>
+					<?php
+					} else {
+						echo __('Wenn diese Schaltfläche aktiviert ist, darf der Nutzer die App zur Verwaltung von Zählerständen nutzen', 'kpm-counter');
+					}
+					?>
 				</td>
 			</tr>
-<?php
+		<?php
 
 		}
 	}

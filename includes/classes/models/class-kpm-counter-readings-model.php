@@ -42,8 +42,9 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Ctagged
         'id'            => '%d',
         'ctag'          => '%d',
         'counter_id'    => '%d',
-        'reading'       => '%s',
-        'temperature'   => '%d',
+        'reading'       => '%f',
+        'consumption'   => '%f',
+        'temperature'   => '%f',
         'date'          => '%s',
         'remark'        => '%s',
     ];
@@ -141,7 +142,8 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Ctagged
                 `id` bigint(20) NOT NULL,
                 `counter_id` bigint(20) NOT NULL,
                 `reading` float(11,4) NOT NULL,
-                `temperature` int(4) NOT NULL,
+                `consumption` float(11,4) NOT NULL,
+                `temperature` float(11,4) NOT NULL,
                 `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 `ctag` bigint UNSIGNED DEFAULT 1,
                 `remark` varchar(100) COLLATE utf8_unicode_ci NOT NULL

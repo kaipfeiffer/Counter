@@ -12,9 +12,9 @@ if ( ! defined( 'WPINC' ) ) {
  * @author     Kai Pfeiffer <kp@idevo.de>
  */
 
- require_once KPM_COUNTER_PLUGIN_PATH . 'includes/abstracts/abstract-kpm-counter-model-filtered.php';
+ require_once KPM_COUNTER_PLUGIN_PATH . 'includes/abstracts/abstract-kpm-counter-model-ctagged.php';
 
- class Kpm_Counter_Counters_Model extends Kpm_Counter_Model_Filtered
+ class Kpm_Counter_Counters_Model extends Kpm_Counter_Model_Ctagged
 {
     /**
      * VARIABLES
@@ -39,6 +39,8 @@ if ( ! defined( 'WPINC' ) ) {
         'ctag'          => '%d',
         'id'            => '%d',
         'owner'         => '%d',
+        'type'          => '%d',
+        'measure'       => '%d',
         'location'      => '%d',
         'parent'        => '%d',
         'identifier'    => '%s',
@@ -100,6 +102,8 @@ if ( ! defined( 'WPINC' ) ) {
             'CREATE TABLE `%1$s` (
             `id` bigint UNSIGNED NOT NULL,
             `owner` bigint UNSIGNED NOT NULL,
+            `type` bigint UNSIGNED NOT NULL,
+            `measure` bigint UNSIGNED NOT NULL,
             `location` bigint UNSIGNED NOT NULL,
             `parent` bigint UNSIGNED DEFAULT NULL,
             `identifier` varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -143,4 +147,20 @@ if ( ! defined( 'WPINC' ) ) {
         $wpdb->query($sql);
     }
 
+
+
+    /**
+     * @function get_defaults
+     * 
+     * get default values to the table columns
+     * 
+     * @return array    default values
+     */
+    protected static function get_defaults()
+    {
+        if(isset(static::$user)){
+            return array('owner' => static::$user);
+        }
+        return array();
+    }
 }

@@ -48,16 +48,17 @@ class Kpm_Counter_Auth extends Kpm_Counter_Singleton
      * @param
      * @return array
      */
-    public function authenticate()
+    public function authenticate($request)
     {
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        // $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['AUTHORIZATION'];
+        $authHeader = $request->get_header('authorization');
 
         $arr = explode(" ", $authHeader);
         $data    = null;
 
         if (1 < count($arr)) {
             $data = $this->jwt->decode_jwt($arr[1]);
-            error_log(__CLASS__ . '->' . print_r($data, 1));
+            // error_log(__CLASS__ . '->' . __LINE__ . '->'. print_r($data, 1));
         }
         return $data;
     }

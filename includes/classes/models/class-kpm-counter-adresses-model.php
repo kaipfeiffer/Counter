@@ -36,6 +36,7 @@ class Kpm_Counter_Adresses_Model extends Kpm_Counter_Model
      */
     protected static $columns = [
         'id'        => '%d',
+        'location'  => '%s',
         'company'   => '%s',
         'street'    => '%s',
         'misc'      => '%s',
@@ -89,6 +90,7 @@ class Kpm_Counter_Adresses_Model extends Kpm_Counter_Model
         $sql = sprintf(
             'CREATE TABLE `%1$s` (
                 `id` int(11) NOT NULL,
+                `location` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
                 `company` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
                 `street` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
                 `misc` varchar(40) COLLATE utf8_unicode_ci NOT NULL DEFAULT "",

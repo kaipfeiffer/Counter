@@ -101,15 +101,19 @@ class Kpm_Counter_Login_Controller extends Kpm_Counter_Controller
         if ($user instanceof WP_User) {
             $data   = [
                 'id' => $user->data->ID,
-                'counter_user' => get_user_meta($user->data->ID, 'kpm_counter_user_id', true),
                 'name' => $user->data->display_name,
                 'email' => $user->data->user_email,
             ];
-            $counter_user  = Kpm_Counter_Customers_Model::read($data['counter_user']);
+            $counter_user           = Kpm_Counter_Customers_Model::read(array('wp_id' => $data['id']));
+            $counter_user           = reset($counter_user );
+            error_log(__CLASS__.'->'.__LINE__.'->'.print_r($counter_user,1));
 
-            error_log(__CLASS__ . '->' . $login_name . '->' . $password);
-            $jwt_generator = Kpm_Counter_JWT::get_instance(KPM_COUNTER_PLUGIN_NAME);
-            $jwt    = $jwt_generator->create_jwt($data);
+            $data['counter_user']   = $counter_user['id'];
+
+            if ($data['counter_user']) {
+                $jwt_generator = Kpm_Counter_JWT::get_instance(KPM_COUNTER_PLUGIN_NAME);
+                $jwt    = $jwt_generator->create_jwt($data);
+            }
 
             if ($jwt) {
                 $meta_key   = strtolower('_' . KPM_COUNTER_PLUGIN_NAME . '_jwt');
@@ -120,11 +124,13 @@ class Kpm_Counter_Login_Controller extends Kpm_Counter_Controller
         }
         if ($jwt) {
             $result = array(
-                'message' => 'Successful login.',
-                'jwt' => $jwt,
-                'ctag'  => $counter_user->ctag,
-                'firstname'  => $counter_user->firstname,
-                'lastname'  => $counter_user->lastname
+                'message'   => 'Successful login.',
+                'data'      => $data,
+                'jwt'       => $jwt,
+                'loginname' => $counter_user['loginname'],
+                'ctag'      => $counter_user['ctag'],
+                'firstname' => $counter_user['firstname'],
+                'lastname'  => $counter_user['lastname'],
                 // 'email' => $user->data->user_email,
             );
         } else {

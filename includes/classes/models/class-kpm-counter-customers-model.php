@@ -136,7 +136,7 @@ if ( ! defined( 'WPINC' ) ) {
                 ADD PRIMARY KEY (`%2$s`),
                 ADD UNIQUE KEY `loginname` (`loginname`),
                 ADD UNIQUE KEY `email` (`email`),
-                ADD KEY `nachname` (`nachname`(8)),
+                ADD KEY `lastname` (`lastname`(8)),
                 ADD KEY `adress_id` (`adress_id`);',
             static::get_tablename(),
             static::$primary

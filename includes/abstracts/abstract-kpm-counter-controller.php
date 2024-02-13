@@ -15,7 +15,7 @@ require_once KPM_COUNTER_PLUGIN_PATH . 'includes/traits/trait-kpm-counter-errors
 
 abstract class Kpm_Counter_Controller
 {
-    USE Kpm_Counter_Errors;
+    use Kpm_Counter_Errors;
 
     /**
      * VARIABLES
@@ -94,6 +94,7 @@ abstract class Kpm_Counter_Controller
     {
         $class =  KPM_COUNTER_PLUGIN_PATH . 'includes/classes/models/class-' . str_replace('_', '-', strtolower(static::$database_class)) . '.php';
 
+        // error_log(__CLASS__ . '->' . __FUNCTION__ . '->' . __LINE__ . '-> CLASS: ' . $class);
         require_once $class;
     }
 
@@ -111,7 +112,7 @@ abstract class Kpm_Counter_Controller
      * @param   array       associative array with key => value pairs for insertion
      * @return  array|null  if successful, the stored data row
      */
-    public static function authenticate()
+    public static function authenticate($request)
     {
         $class =  KPM_COUNTER_PLUGIN_PATH . 'includes/singletons/class-' . str_replace('_', '-', strtolower(static::$auth_class)) . '.php';
 
@@ -119,9 +120,9 @@ abstract class Kpm_Counter_Controller
 
         static::$auth   = static::$auth_class::get_instance('');
 
-        $result   = static::$auth->authenticate();
+        $result   = static::$auth->authenticate($request);
 
-        // error_log(__CLASS__.'->'.__FUNCTION__.'-> CLASS: '.static::$class_name);
+        // error_log(__CLASS__ . '->' . __FUNCTION__ . '-> CLASS: ' . static::$class_name . '->' . print_r($result, 1));
         // error_log(__CLASS__.'->'.__FUNCTION__.'-> Class_name: '.print_r(static::$class_name,1));
         if (isset($result['message']) && 'Access granted:' === $result['message']) {
             static::$data = $result['data'];
@@ -183,64 +184,32 @@ abstract class Kpm_Counter_Controller
         switch ($method) {
                 // Neuen Eintrag speichern
             case 'POST': {
-                    $params = $request->get_params();
-                    error_log(__CLASS__ . '->' . __LINE__ . '-> PARAMS:' . print_r($params, 1));
-                    if ($params) {
-                        if (isset($params[static::$database_class::get_primary()]) && 0 < $params[static::$database_class::get_primary()]) {
-
-                            error_log(__CLASS__ . '->' . __LINE__ . '->UPDATE');
-                            $result = static::$database_class::update($params);
-                        } elseif(array_is_list($params)) {
-                            error_log(__CLASS__ . '->' . __LINE__ . '->MULTIPLE');
-                            $result = static::$database_class::user(static::$data->counter_user)::create_multi($params);
-                        } else {
-                            error_log(__CLASS__ . '->' . __LINE__ . '->CREATE');
-                            $result = static::$database_class::create($params);
-                        }
-                        if ($result) {
-                            return $result;
-                        } else {
-                            $error = new \WP_Error(
-                                'rest_post_invalid_id',
-                                __(static::$errorOnSave, ''),
-                                array('status' => 404)
-                            );
-                            return $error;
-                        }
-                    } else {
-                        $error = new \WP_Error(
-                            'rest_post_invalid_id',
-                            __(static::$errorMissingData, ''),
-                            array('status' => 404)
-                        );
-                        return $error;
-                    }
+                    return static::post($request);
                     break;
                 }
             case 'PUT': {
-                    $params = $request->get_params();
-                    if (isset($params[static::$database_class::get_primary()]) && 0 < $params[static::$database_class::get_primary()]) {
-
-                        error_log(__CLASS__ . '->' . __LINE__ . '->UPDATE');
-                        $result = static::$database_class::update($params);
-                    }
-                    if ($result) {
-                        return $result;
-                    } else {
-                        $error = new \WP_Error(
-                            'rest_post_invalid_id',
-                            __(static::$errorOnSave, ''),
-                            array('status' => 404)
-                        );
-                        return $error;
-                    }
+                    return static::put($request);
                     break;
                 }
             case 'PATCH': {
-                    return ['message' => 'PATCH Method'];
+                    return static::patch($request);
                     break;
                 }
         }
+    }
+
+
+    /**
+     * @function filter_multiple
+     * 
+     * prepare date before insertion
+     * 
+     * @param   array       array with entries to insert
+     * @return  array|null  if successful, the edited array
+     */
+    public static function filter_multiple($params)
+    {    
+        return $params;
     }
 
 
@@ -305,19 +274,7 @@ abstract class Kpm_Counter_Controller
      */
     public static function patch(WP_REST_Request $request)
     {
-    }
-
-
-    /**
-     * @function put
-     * 
-     * save a row to the table
-     * 
-     * @param   array       associative array with key => value pairs for insertion
-     * @return  array|null  if successful, the stored data row
-     */
-    public static function put(WP_REST_Request $request)
-    {
+        return ['message' => 'PATCH Method'];
     }
 
 
@@ -331,5 +288,69 @@ abstract class Kpm_Counter_Controller
      */
     public static function post(WP_REST_Request $request)
     {
+        $params = $request->get_params();
+        // error_log(__CLASS__ . '->' . __LINE__ . '-> PARAMS:' . print_r($params, 1));
+        if ($params) {
+            if (isset($params[static::$database_class::get_primary()]) && 0 < $params[static::$database_class::get_primary()]) {
+
+                // error_log(__CLASS__ . '->' . __LINE__ . '->UPDATE');
+                $result = static::$database_class::update($params);
+            } elseif (array_is_list($params)) {
+                // error_log(__CLASS__ . '->' . __LINE__ . '->MULTIPLE');
+                if (is_callable(array(static::$class_name, 'filter_multiple'))) {
+                    $params = static::filter_multiple($params);
+                }
+                $result = static::$database_class::user(static::$data->counter_user)::create_multi($params);
+            } else {
+                // error_log(__CLASS__ . '->' . __LINE__ . '->CREATE');
+                $result = static::$database_class::create($params);
+            }
+            if ($result) {
+                return $result;
+            } else {
+                $error = new \WP_Error(
+                    'rest_post_invalid_id',
+                    __(static::$errorOnSave, ''),
+                    array('status' => 404)
+                );
+                return $error;
+            }
+        } else {
+            $error = new \WP_Error(
+                'rest_post_invalid_id',
+                __(static::$errorMissingData, ''),
+                array('status' => 404)
+            );
+            return $error;
+        }
+    }
+
+
+    /**
+     * @function put
+     * 
+     * save a row to the table
+     * 
+     * @param   array       associative array with key => value pairs for insertion
+     * @return  array|null  if successful, the stored data row
+     */
+    public static function put(WP_REST_Request $request)
+    {
+        $params = $request->get_params();
+        if (isset($params[static::$database_class::get_primary()]) && 0 < $params[static::$database_class::get_primary()]) {
+
+            error_log(__CLASS__ . '->' . __LINE__ . '->UPDATE');
+            $result = static::$database_class::user(static::$data->counter_user)::update($params);
+        }
+        if ($result) {
+            return $result;
+        } else {
+            $error = new \WP_Error(
+                'rest_post_invalid_id',
+                __(static::$errorOnSave, ''),
+                array('status' => 404)
+            );
+            return $error;
+        }
     }
 }
