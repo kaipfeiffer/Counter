@@ -36,15 +36,15 @@ if ( ! defined( 'WPINC' ) ) {
      * Assoziatives Array mit den Spaltennamen und den zugehörigen printf-Platzhaltern
      */
     protected static $columns = [
-        'ctag'          => '%d',
-        'id'            => '%d',
-        'owner'         => '%d',
-        'type'          => '%d',
-        'measure'       => '%d',
-        'location'      => '%d',
-        'parent'        => '%d',
-        'identifier'    => '%s',
-        'name'          => '%s',
+        'ctag'              => '%d',
+        'id'                => '%d',
+        'counter_owner'             => '%d',
+        'counter_type'              => '%d',
+        'measure'           => '%d',
+        'counter_location'  => '%d',
+        'parent'            => '%d',
+        'identifier'        => '%s',
+        'counter_name'              => '%s',
         // 'created_at'    => '%s',
         // 'updated_at'    => '%s',
     ];
@@ -82,7 +82,7 @@ if ( ! defined( 'WPINC' ) ) {
      * 
      * @var integer
      */
-    protected static $user_column = 'owner';
+    protected static $user_column = 'counter_owner';
 
 
     /**
@@ -99,18 +99,19 @@ if ( ! defined( 'WPINC' ) ) {
         global $wpdb;
 
         $sql = sprintf(
-            'CREATE TABLE `%1$s` (
-            `id` bigint UNSIGNED NOT NULL,
-            `owner` bigint UNSIGNED NOT NULL,
-            `type` bigint UNSIGNED NOT NULL,
-            `measure` bigint UNSIGNED NOT NULL,
-            `location` bigint UNSIGNED NOT NULL,
-            `parent` bigint UNSIGNED DEFAULT NULL,
-            `identifier` varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-            `name` varchar(400) COLLATE utf8mb4_unicode_ci NOT NULL,
-            `ctag` bigint UNSIGNED DEFAULT 1,
-            `created_at` timestamp NULL DEFAULT NULL,
-            `updated_at` timestamp NULL DEFAULT NULL
+            'CREATE TABLE %1$s (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                counter_owner bigint(20) unsigned NOT NULL,
+                counter_type bigint(20) unsigned NOT NULL,
+                measure bigint(20) unsigned DEFAULT NULL,
+                counter_location bigint(20) unsigned NOT NULL,
+                parent bigint(20) unsigned DEFAULT NULL,
+                identifier varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+                counter_name varchar(400) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+                ctag bigint(20) unsigned DEFAULT 1,
+                created_at timestamp NULL DEFAULT NULL,
+                updated_at timestamp NULL DEFAULT NULL,
+                PRIMARY KEY  (id)
           ) ENGINE=InnoDB %2$s;',
             static::get_tablename(),
             $wpdb->get_charset_collate()
@@ -135,7 +136,7 @@ if ( ! defined( 'WPINC' ) ) {
             static::get_tablename(),
             static::$primary
         );
-        $wpdb->query($sql);
+        // $wpdb->query($sql);
 
         $sql = sprintf(
             'ALTER TABLE
@@ -144,7 +145,7 @@ if ( ! defined( 'WPINC' ) ) {
             static::get_tablename(),
             static::$primary
         );
-        $wpdb->query($sql);
+        // $wpdb->query($sql);
     }
 
 
@@ -159,7 +160,7 @@ if ( ! defined( 'WPINC' ) ) {
     protected static function get_defaults()
     {
         if(isset(static::$user)){
-            return array('owner' => static::$user);
+            return array(static::$user_column => static::$user);
         }
         return array();
     }

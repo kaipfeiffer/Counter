@@ -36,7 +36,7 @@ class Kpm_Counter_Adresses_Model extends Kpm_Counter_Model
      */
     protected static $columns = [
         'id'        => '%d',
-        'location'  => '%s',
+        'address_location'  => '%s',
         'company'   => '%s',
         'street'    => '%s',
         'misc'      => '%s',
@@ -88,18 +88,19 @@ class Kpm_Counter_Adresses_Model extends Kpm_Counter_Model
         global $wpdb;
 
         $sql = sprintf(
-            'CREATE TABLE `%1$s` (
-                `id` int(11) NOT NULL,
-                `location` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `company` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `street` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `misc` varchar(40) COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
-                `zipcode` varchar(5) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `city` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `country` varchar(40) COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
-                `phone_company` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `fax_company` varchar(20) COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
-                `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+            'CREATE TABLE %1$s (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                address_location varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                company varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                street varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                misc varchar(40) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
+                zipcode varchar(5) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                city varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                country varchar(40) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
+                phone_company varchar(15) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                fax_company varchar(20) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
+                created timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY  (id)
           ) ENGINE=InnoDB %2$s;',
             static::get_tablename(),
             $wpdb->get_charset_collate()
@@ -124,7 +125,7 @@ class Kpm_Counter_Adresses_Model extends Kpm_Counter_Model
             static::get_tablename(),
             static::$primary
         );
-        $wpdb->query($sql);
+        // $wpdb->query($sql);
 
         $sql = sprintf(
             'ALTER TABLE
@@ -133,6 +134,6 @@ class Kpm_Counter_Adresses_Model extends Kpm_Counter_Model
             static::get_tablename(),
             static::$primary
         );
-        $wpdb->query($sql);
+        // $wpdb->query($sql);
     }
 }

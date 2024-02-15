@@ -71,15 +71,15 @@ export default defineComponent({
     const createHeaders = () => {
       let first = props.rows?.length ? props.rows[0] : {};
       let header = [];
-      console.log("length", Object.keys(props.rows).length);
-      console.log("first", first);
+      // console.log("length", Object.keys(props.rows).length);
+      // console.log("first", first);
       for (let i in first) {
         header.push({
           title: i,
           column: i,
         });
       }
-      console.log("header", header);
+      // console.log("header", header);
       return header;
     };
     const defaultSettings = {
@@ -167,13 +167,13 @@ export default defineComponent({
         }
       }
 
-      console.log(
-        "Hallo",
-        index,
-        currentPage.value,
-        props.rows?.length,
-        settings.pageSize
-      );
+      // console.log(
+      //   "Hallo",
+      //   index,
+      //   currentPage.value,
+      //   props.rows?.length,
+      //   settings.pageSize
+      // );
     };
 
     const currentPage = ref(1);
@@ -181,8 +181,8 @@ export default defineComponent({
       const id = route.params.id;
     });
 
-    console.log("Props", props);
-    console.log("Rows", props.rows);
+    // console.log("Props", props);
+    // console.log("Rows", props.rows);
     return {
       end,
       getColumnCount,
@@ -225,4 +225,5 @@ td,
 th {
   text-align: center;
 }
+
 </style>

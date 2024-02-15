@@ -17,7 +17,7 @@ export const useCounterStore = defineStore("counter_store", () => {
    */
   const readings = ref({});
   const counters = ref({});
-  const measures = ref({1:"kw/h",2:"qbm",3:"l",4:"kg",5:"t",6:"fm",7:"rm",8:"srm"});
+  const measures = ref({1:"kw/h",2:"m³",3:"l",4:"kg",5:"t",6:"fm",7:"rm",8:"srm"});
   const type = ref(1);
   const current = ref({});
   const getForm = computed(() => {
@@ -39,20 +39,20 @@ export const useCounterStore = defineStore("counter_store", () => {
       // console.log(
       //   counter,
       //   type.value,
-      //   parseInt(counter.type),
+      //   parseInt(counter.counter_type),
       //   parseInt(type.value)
       // );
       if (
         null === type.value ||
-        parseInt(counter.type) === parseInt(type.value)
+        parseInt(counter.counter_type) === parseInt(type.value)
       ) {
         // console.log("inner");
         dataRow[i] = {
-          name: counter["name"],
+          name: counter.counter_name,
           reading: setDecimalPlaces(getLastReading(i), 1, "always"),
           consumption: setDecimalPlaces(getLastReading(i), 1, "always"),
-          measure: counter["measure"]? measures.value[counter["measure"]] : "",
-          id: counter["id"],
+          measure: counter["measure"]? measures.value[counter.measure] : "",
+          id: counter.id,
         };
         current.value[counter["id"]] = null;
       }
@@ -142,9 +142,9 @@ export const useCounterStore = defineStore("counter_store", () => {
   }
 
   /**
-   * getLastReading
+   * saveReadings
    *
-   * liest den ketzten Eintrag eines Zaehlera aus
+   * sichert Zählerstände
    *
    * @param array reading
    */
@@ -321,12 +321,11 @@ export const useCounterStore = defineStore("counter_store", () => {
   function getLastReading(counter) {
     let result = null;
 
-    // console.log(counter, counters.value[counter]);
 
-    if (readings.value && counter in readings.value.counters) {
+    if (readings?.value?.counters && counter in readings.value.counters) {
       let myReadings = readings.value.counters[counter];
       let myReading = myReadings[myReadings.length - 1];
-      switch (counters?.value?.[counter]?.type * 1) {
+      switch (counters?.value?.[counter]?.counter_type * 1) {
         case 2: {
           result = myReading.consumption;
           break;
@@ -338,6 +337,7 @@ export const useCounterStore = defineStore("counter_store", () => {
     } else {
       result = "";
     }
+    // console.log(counter, counters?.value?.[counter], result);
     return result;
   }
 
@@ -388,7 +388,7 @@ export const useCounterStore = defineStore("counter_store", () => {
   readcounters(usersStore.user.ctag);
   readreadings(usersStore.user.ctag);
   usersStore.setCtag(storeCtag);
-  console.log(counters.value);
+  // console.log(counters.value);
   // }
 
   return {

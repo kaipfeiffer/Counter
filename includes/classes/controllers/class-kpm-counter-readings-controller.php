@@ -86,7 +86,7 @@ class Kpm_Counter_Readings_Controller extends Kpm_Counter_Controller
                 WHERE
                     `counter_id` = %2$d
                 ORDER BY
-                    `date` DESC
+                    `reading_date` DESC
                 LIMIT 1) `r`',
                 static::$database_class::get_tablename(),
                 $entry['counter_id']

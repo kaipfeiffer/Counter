@@ -6,7 +6,7 @@
       <h2 v-if="counter && !action">
         <RouterLink
           :to="{ name: 'counter', params: { action: 'edit', id: counter.id } }"
-          >{{ counter.name }}</RouterLink
+          >{{ counter.counter_name }}</RouterLink
         >
       </h2>
       <div
@@ -19,7 +19,7 @@
             params: { type: 'yearly', id: counter.id },
           }"
           @click="
-            console.log('Clicked Year');
+            // console.log('Clicked Year');
             setType('yearly');
           "
           >Jahr</RouterLink
@@ -35,7 +35,7 @@
             params: { type: 'monthly', id: counter.id },
           }"
           @click="
-            console.log('Clicked month');
+            // console.log('Clicked month');
             setType('monthly');
           "
           >Monat</RouterLink
@@ -51,7 +51,7 @@
             params: { type: 'weekly', id: counter.id },
           }"
           @click="
-            console.log('Clicked week');
+            // console.log('Clicked week');
             setType('weekly');
           "
           >Woche</RouterLink
@@ -67,7 +67,7 @@
             params: { type: 'daily', id: counter.id },
           }"
           @click="
-            console.log('Clicked dai');
+            // console.log('Clicked daily');
             setType('daily');
           "
           >Tag</RouterLink
@@ -212,7 +212,7 @@ export default defineComponent({
 
           currentYear = startYear;
 
-          console.log(currentYear);
+          // console.log(currentYear);
           switch (displayedType.value) {
             case "monthly":
             case "weekly": {
@@ -237,7 +237,7 @@ export default defineComponent({
                 // console.log(currentYear,years[currentYear],years[currentYear].months,Object.keys(years[currentYear].months) );
                 currentYear++;
               }
-              console.log(entryIndex);
+              // console.log(entryIndex);
               // Alle Einträge durchgehen
               for (let key of entryIndex) {
                 // Alle Jahre durchgehen
@@ -308,11 +308,11 @@ export default defineComponent({
 
     const prepareData = () => {
       const parseDate = (currentDate, dailyConsumption) => {
-        console.log(
-          currentDate.toISOString(),
-          currentDate.toLocaleString()
-          // previousDate.toLocaleString()
-        );
+        // console.log(
+        //   currentDate.toISOString(),
+        //   currentDate.toLocaleString()
+        //   // previousDate.toLocaleString()
+        // );
 
         let currentYear = currentDate.getUTCFullYear();
         let currentMonth = currentDate.getUTCMonth();
@@ -409,13 +409,13 @@ export default defineComponent({
               // let currentDate = new Date(
               //   reading.date.replace(/\s[\d\:]+$/, "")
               // );
-              let currentDate = createDateObject(reading.date);
+              let currentDate = createDateObject(reading.reading_date);
 
-              console.log(
-                "Datum",
-                currentDate.toISOString(),
-                currentDate.toLocaleString()
-              );
+              // console.log(
+              //   "Datum",
+              //   currentDate.toISOString(),
+              //   currentDate.toLocaleString()
+              // );
               let timeInterval = Math.floor(
                 (currentDate.getTime() - previousDate.getTime()) /
                   (3600000 * 24)
@@ -463,13 +463,13 @@ export default defineComponent({
                 //   currentDate.getUTCMinutes() + currentDate.getTimezoneOffset()
                 // );
                 currentDate.setUTCDate(currentDate.getUTCDate() - 1);
-                console.log(
-                  currentDate.toLocaleString(),
-                  timeInterval,
-                  currentDate.getUTCFullYear(),
-                  currentDate.getUTCMonth(),
-                  currentDate.getUTCDate()
-                );
+                // console.log(
+                //   currentDate.toLocaleString(),
+                //   timeInterval,
+                //   currentDate.getUTCFullYear(),
+                //   currentDate.getUTCMonth(),
+                //   currentDate.getUTCDate()
+                // );
               }
             } else {
               // Verbrauch des ersten Eintrages dem passenden Yahr etc zu ordenen, dafür
@@ -478,7 +478,7 @@ export default defineComponent({
               //   reading.date.replace(/\s[\d\:]+$/, "")
               // );
 
-              let currentDate = createDateObject(reading.date);
+              let currentDate = createDateObject(reading.reading_date);
               // console.log(
               //   "1stDatum",
               //   currentDate.toISOString(),
@@ -494,7 +494,7 @@ export default defineComponent({
             }
 
             // aktuellen wert als vorhergehenden Wert festlegen
-            previousDate = createDateObject(reading.date);
+            previousDate = createDateObject(reading.reading_date);
             // previousDate = new Date(reading.date.replace(/\s[\d\:]+$/, ""));
 
             previousReading = reading.reading;

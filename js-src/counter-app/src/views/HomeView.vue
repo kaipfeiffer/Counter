@@ -138,7 +138,7 @@ export default defineComponent({
       selectType(type.value)
     })
 
-    console.log("Current",current);
+    // console.log("Current",current);
     return {
       counters, current, getForm,
       loading, selectType, submitForm, type, variants 
@@ -151,6 +151,22 @@ export default defineComponent({
         // If name or page updates, then we will be able to see it in our
         // newValue variable
         console.log("Watcher: loading", newValue, oldValue)
+      }
+    },
+    type: {
+      deep: true,
+      handler: function (newValue, oldValue) {
+        // If name or page updates, then we will be able to see it in our
+        // newValue variable
+        console.log("Watcher: type", newValue, oldValue)
+      }
+    },
+    getForm: {
+      deep: true,
+      handler: function (newValue, oldValue) {
+        // If name or page updates, then we will be able to see it in our
+        // newValue variable
+        console.log("Watcher: getForm", newValue, oldValue)
       }
     }
   }

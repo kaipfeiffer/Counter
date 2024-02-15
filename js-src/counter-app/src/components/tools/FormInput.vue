@@ -31,7 +31,7 @@ import { RouterLink, useRoute } from 'vue-router';
 import { computed, defineComponent, onMounted, ref } from "vue";
 
 export default defineComponent({
-  name: 'UniversalForm',
+  name: 'FormInput',
   components: { RouterLink },
   props: {
     data: { required: true, type: Object },

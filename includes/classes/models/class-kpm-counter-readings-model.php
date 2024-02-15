@@ -45,7 +45,7 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Ctagged
         'reading'       => '%f',
         'consumption'   => '%f',
         'temperature'   => '%f',
-        'date'          => '%s',
+        'reading_date'          => '%s',
         'remark'        => '%s',
     ];
 
@@ -112,7 +112,7 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Ctagged
      * 
      * @var string
      */
-    protected static $user_table_key = 'owner';
+    protected static $user_table_key = 'counter_owner';
 
 
     /**
@@ -138,15 +138,17 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Ctagged
         global $wpdb;
 
         $sql = sprintf(
-            'CREATE TABLE `%1$s` (
-                `id` bigint(20) NOT NULL,
-                `counter_id` bigint(20) NOT NULL,
-                `reading` float(11,4) NOT NULL,
-                `consumption` float(11,4) NOT NULL,
-                `temperature` float(11,4) NOT NULL,
-                `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `ctag` bigint UNSIGNED DEFAULT 1,
-                `remark` varchar(100) COLLATE utf8_unicode_ci NOT NULL
+            'CREATE TABLE %1$s (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                counter_id bigint(20) NOT NULL,
+                reading float(11,4) NOT NULL,
+                consumption float(11,4) NOT NULL,
+                temperature float(11,4) NOT NULL,
+                reading_date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                ctag bigint(20) unsigned DEFAULT "1",
+                remark varchar(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+                PRIMARY KEY (id),
+                KEY counter_id (counter_id,reading_date)
             ) ENGINE=InnoDB %2$s;',
             static::get_tablename(),
             $wpdb->get_charset_collate()
@@ -168,7 +170,7 @@ class Kpm_Counter_Readings_Model extends Kpm_Counter_Model_Ctagged
             'ALTER TABLE 
                 `%1$s`
             ADD PRIMARY KEY (`%2$s`),
-            ADD KEY `counter_id` (`counter_id`,`date`);',
+            ADD KEY `counter_id` (`counter_id`,`reading_date`);',
             static::get_tablename(),
             static::$primary
         );

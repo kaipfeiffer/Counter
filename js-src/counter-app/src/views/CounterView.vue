@@ -6,11 +6,11 @@
       <h2 v-if="counter && !action">
         <RouterLink
           :to="{ name: 'counter', params: { action: 'edit', id: counter.id } }"
-          >{{ counter.name }}</RouterLink
+          >{{ counter.counter_name }}</RouterLink
         >
       </h2>
       <h2 v-if="!loading && entry && 'edit' == action">
-        <span v-if="!entry.name">Neuen Zähler eingeben</span>{{ entry.name }}
+        <span v-if="!entry.counter_name">Neuen Zähler eingeben</span>{{ entry.counter_name }}
       </h2>
       <div v-if="!action">
         <RouterLink
@@ -71,7 +71,7 @@ export default defineComponent({
     const counterStore = useCounterStore();
     const counter = computed(() => {
       let counter = getCounter(route.params.id);
-      console.log(counter);
+      // console.log(counter);
       return counter;
     });
 
@@ -82,32 +82,32 @@ export default defineComponent({
       },
       input_formatters: {},
       labels: {
-        name: "Name",
+        counter_name: "Name",
         measure: "Maß-Einheit",
-        location: "Ort",
+        counter_location: "Ort",
         identifier: "Zählernummer",
       },
       output_formatters: {},
       writable: {
-        name: "text",
+        counter_name: "text",
         measure: "select",
-        location: "text",
+        counter_location: "text",
         identifier: "text",
-        type: "hidden",
+        counter_type: "hidden",
       },
     };
 
     const tableHead = computed(() => {
       let head;
-      console.log("type",counter.value.type);
-      switch (counter.value.type * 1) {
+      // console.log("type",counter.value.counter_type);
+      switch (counter.value.counter_type * 1) {
         case 2: {
           head = [
             {
               title: null,
               links: [{ title: "bearbeiten", route: "reading", index: "id" }],
             },
-            { title: "Datum", column: "date" },
+            { title: "Datum", column: "reading_date" },
             {
               title: "Zählerstand",
               column: "reading",
@@ -133,7 +133,7 @@ export default defineComponent({
               title: null,
               links: [{ title: "bearbeiten", route: "reading", index: "id" }],
             },
-            { title: "Datum", column: "date" },
+            { title: "Datum", column: "reading_date" },
             {
               title: "Zählerstand",
               column: "reading",
@@ -170,11 +170,11 @@ export default defineComponent({
         for (let i in counter) {
           counter[i] = formatters[i] ? formatters[i](counter[i]) : counter[i];
         }
-        console.log("entry", counter);
+        // console.log("entry", counter);
         return counter;
       },
       set: (newValue) => {
-        console.log(newValue);
+        // console.log(newValue);
         let formatters = settings.input_formatters;
         for (let i in newValue) {
           newValue[i] = formatters[i]
@@ -191,13 +191,13 @@ export default defineComponent({
       for (let i in counter) {
         counter[i] = "";
       }
-      counter.type = route.params.type;
-      console.log("counter-default", counter);
+      counter.counter_type = route.params.type;
+      // console.log("counter-default", counter);
       return counter;
     }
 
     const submitForm = (id) => {
-      console.log("submitForm", entry);
+      // console.log("submitForm", entry);
       counterStore.saveCounter(entry.value);
       router.push({
         name: "home",
@@ -211,29 +211,29 @@ export default defineComponent({
         ? counterStore.measures[counter.value.measure]
         : "";
       if (counter?.value?.readings) {
-        console.log(counter.value.readings);
+        // console.log(counter.value.readings);
         for (let i = 0; i < counter.value.readings.length; i++) {
           reading = { ...counter.value.readings[i] };
           // console.log(readings);
-          reading["consumption"] = (reading["consumption"] * 1).toLocaleString(
+          reading.consumption = (reading.consumption * 1).toLocaleString(
             undefined,
             {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }
           );
-          reading["reading"] = (reading["reading"] * 1).toLocaleString(
+          reading.reading = (reading.reading * 1).toLocaleString(
             undefined,
             {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }
           );
-          reading["measure"] = measure;
-          reading["date"] = formatDate(reading["date"], "d.m.Y");
+          reading.measure = measure;
+          reading.reading_date = formatDate(reading.reading_date, "d.m.Y");
           readings.push(reading);
         }
-        console.log(readings);
+        // console.log(readings);
       }
       return readings;
     });
@@ -243,7 +243,7 @@ export default defineComponent({
     function getCounter(id, edit) {
       let counter = null;
 
-      console.log(id, edit);
+      // console.log(id, edit);
 
       if (counterStore?.counters?.[id]) {
         counter = counterStore?.counters?.[id];
@@ -251,7 +251,7 @@ export default defineComponent({
           counter.readings = counterStore?.readings?.counters?.[id];
         }
       }
-      console.log("counter", counter);
+      // console.log("counter", counter);
       return counter;
     }
 
@@ -283,6 +283,23 @@ export default defineComponent({
   },
 });
 </script>
+<style>
+
+.counter-view .right {
+  text-align: right;
+  display: inline-block;
+  width: 80%;
+  padding: 5px 10px;
+  margin: 0 auto;
+}
+.counter-view .left {
+  text-align: left;
+  display: inline-block;
+  width: 80%;
+  padding: 5px 10px;
+  margin: 0 auto;
+}
+</style>
 <style scoped>
 header {
   display: flex;
@@ -301,13 +318,5 @@ header div {
 header a {
   font-size: 1.5em;
   padding-left: 50px;
-}
-
-.counter-view .right {
-  text-align: right;
-  display: inline-block;
-  width: 80%;
-  padding: 5px 10px;
-  margin: 0 auto;
 }
 </style>

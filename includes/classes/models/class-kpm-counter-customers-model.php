@@ -95,24 +95,29 @@ if ( ! defined( 'WPINC' ) ) {
         global $wpdb;
 
         $sql = sprintf(
-            'CREATE TABLE `%1$s` (
-                `id` int(11) NOT NULL,
-                `ctag` bigint(20) NOT NULL DEFAULT "0",
-                `wp_id` bigint(20) NOT NULL,
-                `adress_id` int(11) NOT NULL DEFAULT "0",
-                `firstname` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `lastname` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `title` enum("Herr","Frau") COLLATE utf8_unicode_ci DEFAULT NULL,
-                `phone` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `fax` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `cell` varchar(15) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `email` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `loginname` varchar(20) COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
-                `login_cnt` tinyint(4) NOT NULL DEFAULT "0",
-                `login_ip` varchar(24) COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
-                `login_date` bigint(20) NOT NULL DEFAULT "0",
-                `password` varchar(32) COLLATE utf8_unicode_ci DEFAULT NULL,
-                `status` int(11) DEFAULT NULL
+            'CREATE TABLE %1$s (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                ctag bigint(20) NOT NULL DEFAULT "0",
+                wp_id bigint(20) NOT NULL,
+                adress_id int(11) NOT NULL DEFAULT "0",
+                firstname varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                lastname varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                title varchar(50)  CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                phone varchar(15) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                fax varchar(15) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                cell varchar(15) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                email varchar(80) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                loginname varchar(20) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
+                login_cnt tinyint(4) NOT NULL DEFAULT "0",
+                login_ip varchar(24) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT "",
+                login_date bigint(20) NOT NULL DEFAULT "0",
+                password varchar(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+                status int(11) DEFAULT NULL,
+                PRIMARY KEY  (id),
+                UNIQUE KEY loginname (loginname),
+                UNIQUE KEY email (email),
+                KEY lastname (lastname(8)),
+                KEY adress_id (adress_id)
           ) ENGINE=InnoDB %2$s;',
             static::get_tablename(),
             $wpdb->get_charset_collate()
@@ -141,7 +146,7 @@ if ( ! defined( 'WPINC' ) ) {
             static::get_tablename(),
             static::$primary
         );
-        $wpdb->query($sql);
+        // $wpdb->query($sql);
 
         $sql = sprintf(
             'ALTER TABLE
@@ -150,6 +155,6 @@ if ( ! defined( 'WPINC' ) ) {
             static::get_tablename(),
             static::$primary
         );
-        $wpdb->query($sql);
+        // $wpdb->query($sql);
     }
 }

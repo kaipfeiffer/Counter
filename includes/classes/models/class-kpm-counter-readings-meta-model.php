@@ -87,11 +87,14 @@ class Kpm_Counter_Readings_Meta_Model extends Kpm_Counter_Model
         global $wpdb;
 
         $sql = sprintf(
-            'CREATE TABLE `%1$s` (
-                `id` bigint(20) NOT NULL,
-                `reading_id` bigint(20) NOT NULL,
-                `meta_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-                `meta_value` varchar(400) COLLATE utf8mb4_unicode_ci NOT NULL
+            'CREATE TABLE %1$s (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                reading_id bigint(20) NOT NULL,
+                meta_key varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+                meta_value varchar(400) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+                PRIMARY KEY  (`id`),
+                KEY meta_key (meta_key),
+                KEY reading_id (reading_id,meta_key)
             ) ENGINE=InnoDB %2$s;',
             static::get_tablename(),
             $wpdb->get_charset_collate()
@@ -118,7 +121,7 @@ class Kpm_Counter_Readings_Meta_Model extends Kpm_Counter_Model
             static::get_tablename(),
             static::$primary
         );
-        $wpdb->query($sql);
+        // $wpdb->query($sql);
 
         $sql = sprintf(
             'ALTER TABLE
@@ -127,6 +130,6 @@ class Kpm_Counter_Readings_Meta_Model extends Kpm_Counter_Model
             static::get_tablename(),
             static::$primary
         );
-        $wpdb->query($sql);
+        // $wpdb->query($sql);
     }
 }

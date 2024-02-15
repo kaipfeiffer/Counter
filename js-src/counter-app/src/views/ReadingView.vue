@@ -56,7 +56,7 @@ export default defineComponent({
         },
         labels: {
           counterName: "Zähler",
-          date: "Datum",
+          reading_date: "Datum",
           reading: "Zählerstand",
           consumption: "Verbrauch",
           temperature: "Temperatur",
@@ -64,12 +64,13 @@ export default defineComponent({
         },
         output_formatters: {
           reading: (val) => {
-            return setDecimalPlaces(val, 1);
+            
+            return Math.round(val*10)/10;
           },
           consumption: (val) => {
-            return setDecimalPlaces(val, 1);
+            return Math.round(val*10)/10;
           },
-          date: (val) => {
+          reading_date: (val) => {
             return val ? formatDate(val, "Y-m-dTh:i") : "";
           },
         },
@@ -77,7 +78,7 @@ export default defineComponent({
           reading: "decimal",
           consumption: "decimal",
           temperature: "number",
-          date: "datetime-local",
+          reading_date: "datetime-local",
           remark: "textarea",
         },
       };
@@ -111,18 +112,18 @@ export default defineComponent({
       let counter = null;
       let reading = { ...settings.value.writable };
       let date = new Date();
-      console.log(date, date.getMinutes() + -1 * date.getTimezoneOffset());
+      // console.log(date, date.getMinutes() + -1 * date.getTimezoneOffset());
       date.setMinutes(date.getMinutes() + -1 * date.getTimezoneOffset());
 
       for (let i in reading) {
         reading[i] = "";
       }
-      console.log("ROUTE", route.params);
+      // console.log("ROUTE", route.params);
       reading.counter_id = route.params.counter_id;
       counter = counterStore?.counters?.[reading.counter_id];
-      reading.counterName = counter?.name;
-      console.log(date.getTimezoneOffset());
-      reading.date = date.toISOString().replace("T", " ").replace("Z", "");
+      reading.counterName = counter?.counter_name;
+      // console.log(date.getTimezoneOffset());
+      reading.reading_date = date.toISOString().replace("T", " ").replace("Z", "");
       return reading;
     }
 
@@ -132,16 +133,16 @@ export default defineComponent({
 
       if (id && counterStore?.readings?.[id]) {
         reading = counterStore?.readings?.[id];
-        reading.formattedDate = formatDate(reading.date, "d.m.Y");
+        reading.formattedDate = formatDate(reading.reading_date, "d.m.Y");
         counter = counterStore?.counters?.[reading.counter_id];
-        reading.counterName = counter?.name;
+        reading.counterName = counter?.counter_name;
       }
       // console.log(reading);
       return reading;
     }
 
     async function submitForm() {
-      console.log("submit", entry.value);
+      // console.log("submit", entry.value);
       counterStore.saveReading(entry.value);
       router.push({ 
         name: 'counter', 
@@ -152,7 +153,7 @@ export default defineComponent({
       const id = route.params.id;
     });
 
-    console.log(entry);
+    // console.log(entry);
     return {
       entry,
       loading,
@@ -160,7 +161,16 @@ export default defineComponent({
       submitForm,
     };
   },
-  watch: {},
+  watch: {
+    entry: {
+      deep: true,
+      handler: function (newValue, oldValue) {
+        // If name or page updates, then we will be able to see it in our
+        // newValue variable
+        console.log("Watcher: entry", newValue, oldValue)
+      }
+    }
+  },
 });
 </script>
 <style scoped>

@@ -84,7 +84,7 @@ export default defineComponent({
       labelBackBtn: "zurück",
     };
     const settings = computed(() => {
-      console.log("settings", props.settings);
+      // console.log("settings", props.settings);
       return { ...defaultSettings, ...props.settings };
     });
 
@@ -102,7 +102,7 @@ export default defineComponent({
         props.data = newValue;
       },
     });
-    console.log("abort", props.abort);
+    // console.log("abort", props.abort);
 
     const special_fields = ["date", "decimal", "textarea", "select"];
     return { abort, data, settings, special_fields };

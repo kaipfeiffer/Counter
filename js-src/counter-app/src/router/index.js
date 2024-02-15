@@ -7,12 +7,12 @@ const appBaseDir =
   window.location.href.match(
     /https{0,1}\:\/\/[\w\.]+:{0,1}\d*((\/[^\/]+){0,2})\/.*$/
   )?.[1] ?? "";
-console.log(
-  appBaseDir,
-  window.location.href.match(
-    /https{0,1}\:\/\/[\w\.]+:{0,1}\d*((\/[^\/]+\/){0,2}).*$/
-  )
-);
+// console.log(
+//   appBaseDir,
+//   window.location.href.match(
+//     /https{0,1}\:\/\/[\w\.]+:{0,1}\d*((\/[^\/]+\/){0,2}).*$/
+//   )
+// );
 const router = createRouter({
   base: "/kpm",
   history: createWebHistory(import.meta.env.BASE_URL),
