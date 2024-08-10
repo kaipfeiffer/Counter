@@ -117,7 +117,8 @@ if ( ! defined( 'WPINC' ) ) {
             $wpdb->get_charset_collate()
         );
 
-        dbDelta($sql);
+        $res    = dbDelta($sql);
+        error_log(__CLASS__.'->'.__LINE__.'->'.print_r($res,1));
     }
 
     /**

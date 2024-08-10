@@ -128,7 +128,7 @@ class Kpm_Counter_Admin
 
 				include_once KPM_COUNTER_PLUGIN_PATH . 'includes/classes/models/class-kpm-counter-customers-model.php';
 				include_once KPM_COUNTER_PLUGIN_PATH . 'includes/classes/models/class-kpm-counter-adresses-model.php';
-				$user	= Kpm_Counter_Customers_Model::read(array('id' => $userid));
+				$user	= Kpm_Counter_Customers_Model::read(array('wp_id' => $userid));
 				if (!$user) {
 					$wp_user	= get_user_by('id', $userid);
 					$user_data	= array(

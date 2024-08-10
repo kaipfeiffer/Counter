@@ -3,16 +3,17 @@ import HomeView from "../views/HomeView.vue";
 import { useUserStore } from "@/stores/user";
 
 // console.log(window.location.href.match(/https{0,1}\:\/\/[\w\.]+:{0,1}\d*(\/[^\/]+)/)[1]);
-const appBaseDir =
+const appBaseDir = localStorage.getItem("kpm_appBaseDir") ?? 
   window.location.href.match(
     /https{0,1}\:\/\/[\w\.]+:{0,1}\d*((\/[^\/]+){0,2})\/.*$/
   )?.[1] ?? "";
-// console.log(
-//   appBaseDir,
-//   window.location.href.match(
-//     /https{0,1}\:\/\/[\w\.]+:{0,1}\d*((\/[^\/]+\/){0,2}).*$/
-//   )
-// );
+  localStorage.setItem("kpm_appBaseDir",appBaseDir); 
+console.log(
+  appBaseDir,
+  window.location.href.match(
+    /https{0,1}\:\/\/[\w\.]+:{0,1}\d*((\/[^\/]+\/){0,2}).*$/
+  )
+);
 const router = createRouter({
   base: "/kpm",
   history: createWebHistory(import.meta.env.BASE_URL),

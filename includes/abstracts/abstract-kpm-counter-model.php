@@ -597,7 +597,7 @@ abstract class Kpm_Counter_Model
         if (!$table_exists) {
             // insert data
             if (static::$import_file) {
-                static::import();
+                // static::import();
             }
             // create indices
             // static::create_indices();

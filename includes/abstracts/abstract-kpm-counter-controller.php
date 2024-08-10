@@ -305,7 +305,9 @@ abstract class Kpm_Counter_Controller
                 // error_log(__CLASS__ . '->' . __LINE__ . '->CREATE');
                 $result = static::$database_class::create($params);
             }
+            error_log(__CLASS__ . '->' . __LINE__ . '->CREATE:'.print_r($result,1));
             if ($result) {
+
                 return $result;
             } else {
                 $error = new \WP_Error(

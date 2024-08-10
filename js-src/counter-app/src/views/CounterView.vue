@@ -84,14 +84,14 @@ export default defineComponent({
       labels: {
         counter_name: "Name",
         measure: "Maß-Einheit",
-        counter_location: "Ort",
+        // counter_location: "Ort",
         identifier: "Zählernummer",
       },
       output_formatters: {},
       writable: {
         counter_name: "text",
         measure: "select",
-        counter_location: "text",
+        // counter_location: "text",
         identifier: "text",
         counter_type: "hidden",
       },
@@ -318,5 +318,9 @@ header div {
 header a {
   font-size: 1.5em;
   padding-left: 50px;
+}
+.counter-view {
+  border: 1px solid var(--color-border);
+  padding: 10px;
 }
 </style>

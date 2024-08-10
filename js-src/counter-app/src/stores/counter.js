@@ -17,7 +17,16 @@ export const useCounterStore = defineStore("counter_store", () => {
    */
   const readings = ref({});
   const counters = ref({});
-  const measures = ref({1:"kw/h",2:"m³",3:"l",4:"kg",5:"t",6:"fm",7:"rm",8:"srm"});
+  const measures = ref({
+    1: "kw/h",
+    2: "m³",
+    3: "l",
+    4: "kg",
+    5: "t",
+    6: "fm",
+    7: "rm",
+    8: "srm",
+  });
   const type = ref(1);
   const current = ref({});
   const getForm = computed(() => {
@@ -51,7 +60,7 @@ export const useCounterStore = defineStore("counter_store", () => {
           name: counter.counter_name,
           reading: setDecimalPlaces(getLastReading(i), 1, "always"),
           consumption: setDecimalPlaces(getLastReading(i), 1, "always"),
-          measure: counter["measure"]? measures.value[counter.measure] : "",
+          measure: counter["measure"] ? measures.value[counter.measure] : "",
           id: counter.id,
         };
         current.value[counter["id"]] = null;
@@ -84,7 +93,7 @@ export const useCounterStore = defineStore("counter_store", () => {
     };
     let params = ctag ? { ctag: ctag, ...default_param } : default_param;
 
-    let buffer = JSON.parse(localStorage.getItem(target));
+    let buffer = JSON.parse(localStorage.getItem(target)) ?? {};
     let data;
     let err = null;
 
@@ -192,9 +201,18 @@ export const useCounterStore = defineStore("counter_store", () => {
     if (result instanceof Array && result.length) {
       let row = result.shift();
       if (row.ctag && row.ctag * 1 > storeCtag * 1) {
-        let readings = counters.value[row.id]?.readings;
+        let old_readings = counters.value[row.id]?.readings;
 
-        counters.value[row.id] = { ...row, readings: readings };
+        counters.value[row.id] = { ...row, readings: old_readings };
+
+        // Falls es sich um einen neuen Zähler handelt
+        if (!counter?.id) {
+          if(!readings?.value?.counters){
+            readings.value.counters = {};
+          }
+          // Eintrag in counters-key des readings-Objektes erstellen
+          readings.value.counters[row.id] = [];
+        }
 
         // Counter-Eintrag aus Local-Storage auslesen, ...
         let ls_counters = JSON.parse(localStorage.getItem("counters"));
@@ -237,7 +255,7 @@ export const useCounterStore = defineStore("counter_store", () => {
 
     delete reading.touched;
 
-    console.log("Reading", {...reading});
+    console.log("Reading", { ...reading });
     if (reading?.id) {
       result = await api.put(`${baseUrl}readings`, reading);
     } else {
@@ -321,18 +339,17 @@ export const useCounterStore = defineStore("counter_store", () => {
   function getLastReading(counter) {
     let result = null;
 
-
     if (readings?.value?.counters && counter in readings.value.counters) {
       let myReadings = readings.value.counters[counter];
       let myReading = myReadings[myReadings.length - 1];
       switch (counters?.value?.[counter]?.counter_type * 1) {
         case 2: {
-          result = myReading.consumption;
+          result = myReading?.consumption ?? 0;
           break;
         }
         case 1:
         default:
-          result = myReading.reading;
+          result = myReading?.reading ?? 0;
       }
     } else {
       result = "";
@@ -351,7 +368,9 @@ export const useCounterStore = defineStore("counter_store", () => {
    */
   async function readcounters(ctag, page) {
     var counter_types = [];
-    counters.value = await read("counters", ctag, page);
+    var data = (await read("counters", ctag, page)) ?? {};
+    console.log(data);
+    counters.value = data ? data : {};
     // cTag darf noch nicht im usersStore gesichert werden
     // muss eventuell angepasst werden, falls diese Methode
     // nicht nur beim Initialisieren aufgerufen wird
@@ -367,7 +386,7 @@ export const useCounterStore = defineStore("counter_store", () => {
    * @param integer page
    */
   async function readreadings(ctag, page) {
-    let data = await read("readings", ctag, page);
+    let data = (await read("readings", ctag, page)) ?? {};
     for (let i in data) {
       let counter_id = data[i]["counter_id"];
       let reading_id = data[i]["id"];
@@ -380,13 +399,14 @@ export const useCounterStore = defineStore("counter_store", () => {
       // data.counters[counter_id][reading_id] = data[i];
       data.counters[counter_id].push(data[i]);
     }
-    readings.value = data;
+    readings.value = data ? data : {};
     loading.value = false;
     // console.log(getForm.value);
   }
 
   readcounters(usersStore.user.ctag);
   readreadings(usersStore.user.ctag);
+  console.log(readings);
   usersStore.setCtag(storeCtag);
   // console.log(counters.value);
   // }
