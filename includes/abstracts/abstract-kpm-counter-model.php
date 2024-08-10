@@ -403,7 +403,7 @@ abstract class Kpm_Counter_Model
             $page_size
         );
 
-        $result = $wpdb->get_results($sql,ARRAY_A);
+        $result = $wpdb->get_results($sql, ARRAY_A);
 
         return $result;
     }
@@ -492,7 +492,7 @@ abstract class Kpm_Counter_Model
             $stmt   = $wpdb->prepare($stmt, array_values($params));
         }
         error_log(__CLASS__ . '->' . __LINE__ . '->' . $stmt);
-        $result = $wpdb->get_results($stmt,ARRAY_A);
+        $result = $wpdb->get_results($stmt, ARRAY_A);
 
         return $result;
     }
@@ -575,9 +575,9 @@ abstract class Kpm_Counter_Model
         error_log(__CLASS__ . $wpdb->prepare($sql, array_values($where)));
         // if a single row ist queried
         if ($id) {
-            $result = $wpdb->get_row($wpdb->prepare($sql, array_values($where)),ARRAY_A);
+            $result = $wpdb->get_row($wpdb->prepare($sql, array_values($where)), ARRAY_A);
         } else {
-            $result = $wpdb->get_results($wpdb->prepare($sql, array_values($where)),ARRAY_A);
+            $result = $wpdb->get_results($wpdb->prepare($sql, array_values($where)), ARRAY_A);
         }
         return $result;
     }
@@ -589,16 +589,18 @@ abstract class Kpm_Counter_Model
      */
     public static function setup_table()
     {
+        $table_exists   = static::table_exists();
+
+        // create the table
+        static::create_table();
         // if the table doesn't exist
-        if (!static::table_exists()) {
-            // create the table
-            static::create_table();
+        if (!$table_exists) {
             // insert data
             if (static::$import_file) {
                 static::import();
             }
             // create indices
-            static::create_indices();
+            // static::create_indices();
         }
     }
 
